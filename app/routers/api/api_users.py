@@ -62,7 +62,10 @@ async def login_user(db: DBType, data: UserLogin):
 
 @router.get("/me")
 async def get_profile(current_user=Depends(get_current_user)):
-    return {"username": current_user.username, "email": current_user.email}
+    return {
+        "username": current_user.username,
+        "email": current_user.email,
+        "id": current_user.id}
 
 
 @router.get("/books/me")

@@ -4,17 +4,13 @@ from jose import JWTError, jwt, ExpiredSignatureError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
-from KEYS import SECRET_KEY, ALGORITHM
 from app.core.exceptions import bad_request, authorization_error
 from app.database.db_depends import get_db
 from app.models import User
 from app.utils.jwt import decode_access_token
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 
-SECRET_KEY = SECRET_KEY
-ALGORITHM = ALGORITHM
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 
 
 async def get_token_from_request(
@@ -38,6 +34,14 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db),
     token: str | None = Depends(get_token_from_request),
 ) -> User:
+    """
+        Получить текущего авторизованного пользователя.
+        Проверяет токен из:
+        1. Authorization header (Bearer token)
+        2. Cookie (access_token)
+        Raises:
+            HTTPException 401: Если токен невалиден или пользователь не найден
+    """
     if not token:
         authorization_error("Not authenticated")
     try:
@@ -56,6 +60,8 @@ async def get_current_user(
 
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
+
     if not user:
         authorization_error("User not found")
+
     return user
