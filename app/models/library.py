@@ -37,3 +37,8 @@ class Library(Base):
         back_populates="libraries",
         overlaps="users_assoc,libraries_assoc",
     )
+
+    @property
+    def is_private(self) -> bool:
+        """Проверка, является ли библиотека приватной"""
+        return self.password_hash is not None

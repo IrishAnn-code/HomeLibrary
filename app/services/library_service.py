@@ -49,7 +49,8 @@ async def books_in_address(db: AsyncSession, lib_id: int, lib_address: str):
 
 
 async def create_library(
-    db: AsyncSession, name: str, password: str | None, owner_id: int):
+    db: AsyncSession, name: str, password: str | None, owner_id: int
+):
     """Создать новую библиотеку, связь с UserLibrary"""
     if not name or name.strip():
         return None

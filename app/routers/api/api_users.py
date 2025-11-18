@@ -112,4 +112,3 @@ async def get_user_info(db: DBType, user_id: int):
     if not user:
         not_found(f"User: {user_id} not found")
     return user
-

@@ -18,14 +18,12 @@ import logging
 # ✅ Настройка логирования
 logging.basicConfig(
     level=logging.INFO if not settings.DEBUG else logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
 # ✅ Rate limiter
-limiter = Limiter(
-    key_func=get_remote_address,
-    default_limits=["200/day", "50/hour"])
+limiter = Limiter(key_func=get_remote_address, default_limits=["200/day", "50/hour"])
 
 tags_metadata = [
     {"name": "default", "description": "Приветствие на главной странице"},
@@ -34,6 +32,7 @@ tags_metadata = [
     {"name": "Books (API)"},
     {"name": "Books (HTML)"},
 ]
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -55,7 +54,7 @@ app = FastAPI(
     version="7.10",
     openapi_tags=tags_metadata,
     debug=settings.DEBUG,
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # ✅ Привязываем limiter к app
@@ -81,19 +80,16 @@ templates = Jinja2Templates(directory="app/templates")
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     return templates.TemplateResponse(
-        "index.html",
-        {"request": request, "title": "Главная страница"}
+        "index.html", {"request": request, "title": "Главная страница"}
     )
 
+
 # ✅ Health check endpoint
-@app.get("/health", tags=['default'])
+@app.get("/health", tags=["default"])
 async def health_check():
     """Проверка состояния API"""
-    return {
-        "status": "healthy",
-        "app": settings.APP_NAME,
-        "version": "8.0.0"
-    }
+    return {"status": "healthy", "app": settings.APP_NAME, "version": "8.0.0"}
+
 
 app.include_router(api_users.router)
 app.include_router(api_books.router)  # Позволит подключать другие роутеры

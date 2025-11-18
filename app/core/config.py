@@ -7,60 +7,46 @@ import os
 
 class Settings(BaseSettings):
     """Настройки приложения из переменных окружения"""
-    
+
     # Database
     DATABASE_URL: str = Field(
         default="sqlite+aiosqlite:///./homelibrary.db",
-        description="URL подключения к базе данных"
+        description="URL подключения к базе данных",
     )
-    
+
     # Security
     SECRET_KEY: str = Field(
-        ...,  # Обязательное поле
-        min_length=32,
-        description="Секретный ключ для JWT"
+        ..., min_length=32, description="Секретный ключ для JWT"  # Обязательное поле
     )
-    ALGORITHM: str = Field(
-        default="HS256",
-        description="Алгоритм шифрования JWT"
-    )
+    ALGORITHM: str = Field(default="HS256", description="Алгоритм шифрования JWT")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
-        default=10080,  # 7 дней
-        description="Время жизни токена в минутах"
+        default=10080, description="Время жизни токена в минутах"  # 7 дней
     )
-    
+
     # CORS
     ALLOWED_ORIGINS: List[str] = Field(
         default=["http://localhost:3000", "http://localhost:8000"],
-        description="Разрешенные источники для CORS"
+        description="Разрешенные источники для CORS",
     )
-    
+
     # App
-    APP_NAME: str = Field(
-        default="HomeLibrary",
-        description="Название приложения"
-    )
-    DEBUG: bool = Field(
-        default=False,
-        description="Режим отладки"
-    )
-    
+    APP_NAME: str = Field(default="HomeLibrary", description="Название приложения")
+    DEBUG: bool = Field(default=False, description="Режим отладки")
+
     # Telegram Bot
     TELEGRAM_BOT_TOKEN: str | None = Field(
-        default=None,
-        description="Токен Telegram бота"
+        default=None, description="Токен Telegram бота"
     )
     TELEGRAM_ADMIN_ID: int | None = Field(
-        default=None,
-        description="ID администратора в Telegram"
+        default=None, description="ID администратора в Telegram"
     )
-    
+
     # Настройки Pydantic
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"  # Игнорировать лишние переменные
+        extra="ignore",  # Игнорировать лишние переменные
     )
 
 
