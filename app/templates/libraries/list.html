@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Библиотеки</h1>
+<ul>
+  {% for lib in libs %}
+    <li><a href="/library/{{ lib.slug }}">{{ lib.name }}</a></li>
+  {% else %}
+    <li>Библиотек нет</li>
+  {% endfor %}
+</ul>
+{% endblock %}

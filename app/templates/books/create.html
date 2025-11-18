@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block crud_container %}
+<section class="container-sm mt-5 p-4 rounded shadow" style="background:#2b2b2b;color:white;">
+  <h2 class="text-center mb-4">Добавить новую книгу</h2>
+
+  <form method="post" action="/books/create">
+    <div class="mb-3">
+      <label for="author" class="form-label">Автор книги:</label>
+      <input type="text" id="author" name="author" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label for="title" class="form-label">Название книги:</label>
+      <input type="text" id="title" name="title" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label for="description" class="form-label">Описание:</label>
+      <input type="text" id="description" name="description" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label for="genre" class="form-label">Жанр:</label>
+      <input type="text" id="genre" name="genre" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label for="read_status" class="form-label">Статус:</label>
+      <textarea id="read_status" name="read_status" class="form-control" required></textarea>
+      #---- Возможность выбрать статус, а не писать ----
+    </div>
+    #---- Выберите доступную библиотеку, окно в котором можно выбрать библиотеки доступные пользователю ----
+    <div class="mb-3">
+      <label for="room" class="form-label">Комната:</label>
+      --- выводит пример всех комнат использованных пользователем ---
+      <input type="text" id="room" name="room" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label for="shelf" class="form-label">Полка:</label>
+      <input type="text" id="shelf" name="shelf" class="form-control" value="0">
+    </div>
+    <div class="mb-3">
+      <label for="color" class="form-label">Цвет обложки:</label>
+      <input type="text" id="color" name="color" class="form-control" value="0">
+    </div>
+    <button type="submit" class="btn btn-success">Добавить книгу</button>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block crud_container %}
+
+<section class="container-sm mt-5 p-4 rounded shadow" style="background: #2b2b2b; color: #fff;">
+  <h2 class="text-center mb-4">Удаление задачи</h2>
+
+  {% if task %}
+  <p><strong>ID:</strong> {{ task.id }}</p>
+  <p><strong>Название:</strong> {{ task.title }}</p>
+  <p><strong>Описание:</strong> {{ task.content }}</p>
+  <p><strong>Приоритет:</strong> {{ task.priority }}</p>
+
+  <form action="/tasks/delete/{{ task.id }}" method="post">
+    <p>Вы уверены, что хотите удалить эту задачу?</p>
+    <div style="display:flex; gap:10px;">
+      <button type="submit" class="btn btn-danger">Да, удалить</button>
+      <a href="/tasks" class="btn btn-secondary">Отмена</a>
+    </div>
+  </form>
+
+  <hr>
+
+  <!-- JS-вариант для API -->
+  <button id="api-delete" class="btn btn-warning mt-3">Удалить через API (JSON)</button>
+
+  <script>
+    document.getElementById('api-delete').addEventListener('click', async () => {
+      if (confirm("Удалить задачу через API?")) {
+        const response = await fetch(`/tasks/delete/{{ task.id }}`, {
+          method: 'DELETE',
+          headers: { 'Accept': 'application/json' }
+        });
+
+        const result = await response.json();
+        alert(result.message || 'Удаление выполнено');
+        window.location.href = '/tasks';
+      }
+    });
+  </script>
+
+  {% else %}
+  <div class="alert alert-danger text-center">
+    Задача не найдена.
+  </div>
+  {% endif %}
+</section>
+
+{% endblock %}

@@ -1,0 +1,40 @@
+# Виртуальное окружение
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+
+# База данных
+*.db
+*.sqlite3
+
+# IDE и системные файлы
+.vscode/
+.idea/
+.DS_Store
+
+# Кэш и логи
+*.log
+*.bak
+*.tmp
+*.swp
+__pycashe__/
+
+# Компиляция и билд
+build/
+dist/
+*.egg-info/
+
+# Переменные окружения
+.env
+.env.*
+
+# Тестовые артефакты
+.coverage
+.pytest_cache/
+htmlcov/
+
+# Другие временные файлы
+*.orig
+*.rej

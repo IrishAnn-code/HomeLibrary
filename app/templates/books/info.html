@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block crud_container %}
+<article class="card container fluid">
+        <div class="card-body">
+            <h2>{{ book.author }}: {{ book.title }}</h2>
+            <p><strong>Статус прочтения: </strong>{{ book.read_status }}</p>
+            <p><strong>Жанр: </strong>{{ book.genre }}</p>
+            <p><strong>Описание: </strong>{{ book.description }}</p>
+            <p><strong>Адрес библиотеки: </strong>{{ book.lib_address }}</p>
+            <p><strong>Комната: </strong>{{ book.room }}</p>
+            <p><strong>Полка: </strong>{{ book.shelf }}</p>
+            <p><strong>Цвет обложки: </strong>{{ book.color }}</p>
+
+            <p><strong>username: </strong> <a href="/users/{{ user.id }}">{{ user.username }}</a></p>
+
+            <a href="/users/books/ {{ user.id }}">← Назад к списку книг {{ user.username }}</a>
+        </div>
+</article>
+{% endblock %}

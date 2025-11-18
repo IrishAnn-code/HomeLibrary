@@ -1,0 +1,30 @@
+{% extends 'base.html'%}
+{% block crud_container %}
+<section class="container-fluid">
+    <h2 align="center" style="color: white"> Список книг пользователя {{ user.username }}</h2>
+    <br>
+    <div class="card">
+        <table border="1" cellpadding="6">
+          <tr>
+            <th>Автор</th>
+            <th>Название</th>
+            <th>Описание</th>
+            <th>Жанр</th>
+            <th>Статус</th>
+          </tr>
+          {% for book in books %}
+          <tr>
+            <td>{{ book.author }}</td>
+            <td><a href="/books/{{ book.id }}">{{ book.title }}</a></td>
+            <td>{{ book.description }}</td>
+            <td>{{ book.genre }}</td>
+            <td>{{ book.read_status}}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6">Нет книг</td></tr>
+          {% endfor %}
+        </table>
+    </div>
+</section>
+
+{% endblock %}
