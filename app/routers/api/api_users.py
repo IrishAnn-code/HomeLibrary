@@ -1,5 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.auth import get_current_user
@@ -20,6 +22,8 @@ from app.services.user_service import (
 from app.utils.hashing import verify_password, hash_password
 
 router = APIRouter(prefix="/users", tags=["Users (API)"])
+limiter = Limiter(key_func=get_remote_address())
+
 DBType = Annotated[AsyncSession, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
@@ -108,3 +112,4 @@ async def get_user_info(db: DBType, user_id: int):
     if not user:
         not_found(f"User: {user_id} not found")
     return user
+
