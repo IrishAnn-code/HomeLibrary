@@ -1,10 +1,9 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db_depends import get_db
 from app.database.auth import get_current_user
-from app.core.exceptions import not_found, bad_request, forbidden
 from app.models import User
 from app.schemas.library import LibraryCreate
 from app.services.library_service import (
@@ -28,8 +27,10 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 async def libraries_list(db: DBType, user_id: CurrentUser):
     """Все библиотеки пользователя"""
     lib = await get_library(db, user_id.id)
-    if lib is None:
-        not_found("Libraries not found")
+    if not lib:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Libraries not found")
     return lib
 
 
@@ -53,7 +54,9 @@ async def get_lib(db: DBType, slug: str):
     """Найти библиотеку по slug"""
     lib = await get_library_by_slug(db, slug)
     if not lib:
-        not_found("Library not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Library not found")
     return lib
 
 
@@ -61,8 +64,10 @@ async def get_lib(db: DBType, slug: str):
 async def library_books(db: DBType, lib_id: int):
     """Книги, которые лежат в библиотеке"""
     books = await all_books_in_lib(db, lib_id)
-    if books is None:
-        not_found("Books not found")
+    if not books:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Books not found")
     return books
 
 

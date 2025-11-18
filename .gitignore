@@ -1,3 +1,14 @@
+# Environment
+.env
+*.env
+!.env.example
+
+# Database
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
 # Виртуальное окружение
 .venv/
 venv/
@@ -5,14 +16,15 @@ env/
 __pycache__/
 *.pyc
 
-# База данных
-*.db
-*.sqlite3
-
-# IDE и системные файлы
+# IDEs
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
+Thumbs.db
 
 # Кэш и логи
 *.log
@@ -25,9 +37,6 @@ __pycashe__/
 build/
 dist/
 *.egg-info/
-
-# Переменные окружения
-.env
 
 # Тестовые артефакты
 .coverage

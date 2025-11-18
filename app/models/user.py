@@ -1,7 +1,7 @@
 from app.database.db import Base
 from sqlalchemy import Column, String, Integer, UniqueConstraint, DateTime
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 # ---------- User ---------- #
@@ -20,26 +20,37 @@ class User(Base):
     firstname = Column(String, nullable=True)
     lastname = Column(String, nullable=True)
     slug = Column(String, unique=True, nullable=True)
-    created_at = Column(DateTime(timezone=True), default=datetime.now)
+    created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
 
     # Связи:
     # 1. Пользователь может быть участником нескольких библиотек
     libraries_assoc = relationship(
         "UserLibrary",
         back_populates="user",
-        cascade="all, delete-orphan",
-        overlaps="libraries",
+        cascade="all, delete-orphan"
     )
-    # 2. Пользователь может быть владельцем библиотек
-    owned_libraries = relationship("Library", back_populates="owner", overlaps="users")
-    # 3. Через таблицу user_library получаем все библиотеки, где участвует
+
+    # 2. Через таблицу user_library получаем все библиотеки, где участвует
     libraries = relationship(
         "Library",
         secondary="user_library",
         back_populates="users",
-        overlaps="libraries_assoc",
+        viewonly=True
     )
+
+    # 3. Пользователь может быть владельцем библиотек
+    owned_libraries = relationship(
+        "Library",
+        back_populates="owner",
+        foreign_keys='Library.owner_id'
+    )
+
     # 4. Получаем все книги, которые добавил пользователь
     books = relationship(
-        "Book", back_populates="user", overlaps="libraries"
+        "Book", back_populates="user"
     )  # , cascade="all, delete"

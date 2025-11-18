@@ -33,13 +33,13 @@ class Settings(BaseSettings):
     APP_NAME: str = Field(default="HomeLibrary", description="Название приложения")
     DEBUG: bool = Field(default=False, description="Режим отладки")
 
-    # Telegram Bot
-    TELEGRAM_BOT_TOKEN: str | None = Field(
-        default=None, description="Токен Telegram бота"
-    )
-    TELEGRAM_ADMIN_ID: int | None = Field(
-        default=None, description="ID администратора в Telegram"
-    )
+    # # Telegram Bot
+    # TELEGRAM_BOT_TOKEN: str | None = Field(
+    #     default=None, description="Токен Telegram бота"
+    # )
+    # TELEGRAM_ADMIN_ID: int | None = Field(
+    #     default=None, description="ID администратора в Telegram"
+    # )
 
     # Настройки Pydantic
     model_config = SettingsConfigDict(

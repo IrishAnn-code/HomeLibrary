@@ -1,14 +1,14 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Request, Depends, Form
+from fastapi import APIRouter, Request, Depends, Form, HTTPException, status
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.status import HTTP_303_SEE_OTHER
 
 from app.database.db_depends import get_db
 from app.core.exceptions import not_found
-from app.main import limiter
 from app.schemas.user import UserCreate, UserLogin
 from app.services.user_service import (
     get_all_users,
@@ -18,11 +18,11 @@ from app.services.user_service import (
     delete_user,
     register,
     login,
-    create_user,
 )
 
 router = APIRouter(prefix="/user", tags=["Users (HTML)"])
 templates = Jinja2Templates(directory="app/templates")
+limiter = Limiter(key_func=get_remote_address)
 
 DBType = Annotated[AsyncSession, Depends(get_db)]
 
@@ -66,14 +66,14 @@ async def login_form(request: Request):
 
 # ---- POST: Отправка формы входа ----
 @router.post("/login")
-@limiter.limit("5/minute")
+@limiter.limit("1/minute")
 async def login_user(
     request: Request,
-    data=UserLogin,
+    data: UserLogin = Depends(UserLogin.as_form),
     db: AsyncSession = Depends(get_db),
 ):
     result = await login(db, data.username, data.password)
-    if not result:
+    if result is None:
         return templates.TemplateResponse(
             "errors/404.html", {"request": request, "error": "Invalid credentials"}
         )
@@ -85,8 +85,9 @@ async def login_user(
 async def user_books(request: Request, db: DBType, user_id: int):
     books = await book_by_user_id(db, user_id)
     user = await user_info(db, user_id)
-    if books is None:
-        not_found("User or books was not found")
+    if books or user is None:
+        return templates.TemplateResponse("errors/404.html", {"request": request})
+
     return templates.TemplateResponse(
         "books/user_books.html",
         {"request": request, "books": books, "user": user, "title": "Список книг"},
@@ -113,9 +114,3 @@ async def delete(request: Request, db: DBType, user_id: int):
     return templates.TemplateResponse("books/delete.html", {"request": request})
 
 
-# @router.get('/{user_id}', response_class=HTMLResponse)
-# async def detail_page(request: Request, db: DBType, user_id: int):
-#     user = await user_info(db, user_id)
-#     if not user:
-#         return templates.TemplateResponse('errors/404.html', {'request': request})
-#     return templates.TemplateResponse('users/info.html', {'request': request, 'user': user})

@@ -1,13 +1,10 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, status
-from slowapi import Limiter
-from slowapi.util import get_remote_address
+from fastapi import APIRouter, Depends, status, HTTPException
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.auth import get_current_user
 from app.database.db_depends import get_db
-from app.core.exceptions import not_found, bad_request, authorization_error, forbidden
-from app.main import limiter
 from app.models import User
 from app.schemas.user import UserCreate, UserOut, UserLogin
 from app.services.user_service import (
@@ -22,7 +19,6 @@ from app.services.user_service import (
 from app.utils.hashing import verify_password, hash_password
 
 router = APIRouter(prefix="/users", tags=["Users (API)"])
-limiter = Limiter(key_func=get_remote_address())
 
 DBType = Annotated[AsyncSession, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
@@ -32,7 +28,9 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 async def all_users(db: DBType):
     users = await get_all_users(db)
     if not users:
-        not_found("No users found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No users found")
     return users
 
 
@@ -43,20 +41,22 @@ async def all_users(db: DBType):
     summary="Register a new user",
     description="Create a new user account with username, email and password",
 )
-@limiter.limit("3/hour")
 async def register_user(db: DBType, data: UserCreate):
     user = await register(db, data.username, data.email, data.password)
     if not user:
-        raise bad_request("User with this email or username already exists")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User with this email or username already exists")
     return {"id": user.id, "username": user.username}
 
 
 @router.post("/login")
-@limiter.limit("5/minute")
 async def login_user(db: DBType, data: UserLogin):
     user = await login(db, data.username, data.password)
     if not user:
-        authorization_error("Invalid credentials")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials")
     return user
 
 
@@ -73,7 +73,9 @@ async def get_user_books(db: DBType, current_user: CurrentUser):
     """Просмотр книг только текущего пользователя"""
     books = await book_by_user_id(db, current_user.id)
     if books is None:
-        not_found("User or books was not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User or books was not found")
     return books
 
 
@@ -86,11 +88,15 @@ async def edit_user_info(
     current_user: CurrentUser,
 ):
     if current_user.id != user_id:
-        forbidden("Access denied")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied")
 
     user = await update_user(db, user_id, password, user_update)
     if not user:
-        authorization_error("The password and login does not match")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="The password and login does not match")
     return {
         "status_code": status.HTTP_200_OK,
         "transaction": "The user has been updated successfully",
@@ -98,14 +104,16 @@ async def edit_user_info(
     }
 
 
-@router.delete("/delete/{user_id}")
-async def remove_task(db: DBType, user_id: int):
-    deleted = await delete_user(db, user_id)
+@router.delete("/delete/me")
+async def delete_my_account(db: DBType, current_user: CurrentUser):
+    deleted = await delete_user(db, current_user.id)
     if not deleted:
-        not_found(f"Book: {user_info(db, user_id)} was not found")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f'Failed to delete {current_user.id}')
     return {
         "status_code": status.HTTP_200_OK,
-        "transaction": "User delete is successful",
+        "transaction": "Account deleted successfully",
     }
 
 
@@ -113,5 +121,7 @@ async def remove_task(db: DBType, user_id: int):
 async def get_user_info(db: DBType, user_id: int):
     user = await user_info(db, user_id)
     if not user:
-        not_found(f"User: {user_id} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User: {user_id} not found")
     return user

@@ -1,10 +1,10 @@
 from fastapi import Depends, Request
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt, ExpiredSignatureError
+from jose import JWTError, ExpiredSignatureError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import bad_request, authorization_error
+from app.core.exceptions import authorization_error
 from app.database.db_depends import get_db
 from app.models import User
 from app.utils.jwt import decode_access_token
@@ -13,9 +13,7 @@ from app.utils.jwt import decode_access_token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 
 
-async def get_token_from_request(
-    request: Request, token: str | None = Depends(oauth2_scheme)
-) -> str | None:
+async def get_token_from_request(request: Request, token: str | None = Depends(oauth2_scheme)) -> str | None:
     # First try Authorization header (oauth2_scheme)
     if token:
         return token

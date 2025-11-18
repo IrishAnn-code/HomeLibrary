@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timezone
+
 from app.database.db import Base
 from sqlalchemy import Column, String, Integer, Boolean, ForeignKey, DateTime
 from sqlalchemy import Enum as SQLEnum
@@ -24,7 +25,12 @@ class Book(Base):
     shelf = Column(String)  # 3rd shelf
 
     slug = Column(String, unique=True, index=True, nullable=False)
-    created_at = Column(DateTime(timezone=True), default=datetime.now)
+    created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
 
     library_id = Column(Integer, ForeignKey("library.id"), index=True)
     user_id = Column(Integer, ForeignKey("user.id"), index=True)

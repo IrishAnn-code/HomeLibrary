@@ -20,17 +20,6 @@ async def get_user_by_username(db: AsyncSession, username: str):
     return result.scalar_one_or_none()
 
 
-async def create_user(db: AsyncSession, user_data: UserCreate):
-    hashed_pw = hash_password(user_data.password)
-    new_user = User(
-        username=user_data.username, email=user_data.email, password_hash=hashed_pw
-    )
-    db.add(new_user)
-    await db.commit()
-    await db.refresh(new_user)
-    return new_user
-
-
 async def register(db: AsyncSession, username: str, email: str, password: str):
     existing_user = await db.scalar(
         select(User).where((User.email == email) | (User.username == username))
@@ -56,10 +45,10 @@ async def login(db: AsyncSession, username: str, password: str):
         key="access_token",
         value=f"Bearer {token}",
         httponly=True,
-        secure=True,  # ✅ Только HTTPS (в production обязательно!)
+        secure=False,  # ✅ True Только HTTPS (в production обязательно!)
         samesite="strict",  # ✅ Защита от CSRF
         max_age=7 * 24 * 3600,
-        domain=None,  # Текущий домен
+        # domain=None,  # Текущий домен
         path="/",
     )
     return response

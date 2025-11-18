@@ -14,7 +14,12 @@ class Library(Base):
     slug = Column(String, unique=True, nullable=True, index=True)
     password_hash = Column(String, nullable=True)  # None для открытых библиотек
     owner_id = Column(Integer, ForeignKey("user.id"), nullable=True)
-    created_at = Column(DateTime(timezone=True), default=datetime.now)
+    created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
 
     # Связи:
     # 1. Владелец библиотеки (1 владелец)

@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from slowapi.middleware import SlowAPIMiddleware
 
 from app.routers.api import api_books, api_users, api_libraries
-from app.routers.html import hlml_books, html_users, html_libraries
+from app.routers.html import html_books, html_users, html_libraries
 from app.core.config import settings
 
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -95,7 +95,7 @@ app.include_router(api_users.router)
 app.include_router(api_books.router)  # Позволит подключать другие роутеры
 app.include_router(api_libraries.router)
 app.include_router(html_users.router)
-app.include_router(hlml_books.router)
+app.include_router(html_books.router)
 app.include_router(html_libraries.router)
 
 
