@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
+import logging
 
 from app.database.auth import get_current_user
 from app.database.db_depends import get_db
@@ -26,6 +27,7 @@ router = APIRouter(prefix="/user", tags=["Users (HTML)"])
 templates = Jinja2Templates(directory="app/templates")
 limiter = Limiter(key_func=get_remote_address)
 
+logger = logging.getLogger(__name__)
 DBType = Annotated[AsyncSession, Depends(get_db)]
 
 
@@ -57,7 +59,8 @@ async def register_submit(
             httponly=True,
             # secure=True,
             samesite="strict",
-            max_age=7 * 24 * 3600
+            max_age=7 * 24 * 3600,
+            path="/"
         )
         return response
 
@@ -88,9 +91,11 @@ async def login_submit(
     data: UserLogin = Depends(UserLogin.as_form),
 ):
     """Обработка входа"""
+    logger.info(f"🔐 Login attempt: {data.username}")
     user = await authenticate_user(db, data.username, data.password)
 
     if not user:
+        logger.warning(f"❌ Invalid credentials for: {data.username}")
         return templates.TemplateResponse(
             "login.html",
             {
@@ -101,7 +106,9 @@ async def login_submit(
         )
 
     token = create_access_token(user.id)
-    response = RedirectResponse(url="/user/me", status_code=status.HTTP_303_SEE_OTHER)
+    logger.info(f"✅ Token created for user {user.id}: {token[:20]}...")
+
+    response = RedirectResponse(url="/library", status_code=status.HTTP_303_SEE_OTHER)
     response.set_cookie(
         key="access_token",
         value=f"Bearer {token}",
@@ -112,6 +119,8 @@ async def login_submit(
         # domain=None,  # Текущий домен
         path="/"
     )
+
+    logger.info(f"✅ Cookie set for user {user.id}")
     return response
 
 

@@ -71,9 +71,13 @@ async def library_books(db: DBType, lib_id: int):
     return books
 
 
-@router.get("/user/{user_id}", response_model=None)
-async def libraries_by_user(db: DBType, user_id: int):
-    libs = await list_user_libraries(db, user_id)
+@router.get("/", response_model=None)
+async def get_my_libraries(db: DBType, current_user: CurrentUser):
+    """
+    Получить все библиотеки текущего пользователя.
+    Требуется авторизация (токен в cookie или Authorization header).
+    """
+    libs = await list_user_libraries(db, current_user.id)
     return libs
 
 
