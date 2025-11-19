@@ -7,18 +7,20 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.database.auth import get_current_user
 from app.database.db_depends import get_db
-from app.core.exceptions import not_found
+from app.models import User
 from app.schemas.user import UserCreate, UserLogin
 from app.services.user_service import (
     get_all_users,
-    user_info,
-    book_by_user_id,
+    get_user_by_id,
+    get_user_books,
     update_user,
     delete_user,
-    register,
-    login,
+    create_user,
+    authenticate_user,
 )
+from app.utils.jwt import create_access_token
 
 router = APIRouter(prefix="/user", tags=["Users (HTML)"])
 templates = Jinja2Templates(directory="app/templates")
@@ -27,64 +29,108 @@ limiter = Limiter(key_func=get_remote_address)
 DBType = Annotated[AsyncSession, Depends(get_db)]
 
 
-@router.get("/", response_class=HTMLResponse)
-async def all_users(request: Request, db: DBType):
-    users = await get_all_users(db)
-    if not users:
-        return templates.TemplateResponse("errors/404.html", {"request": request})
-    return templates.TemplateResponse(
-        "users/list.html",
-        {"request": request, "users": users, "title": "Список пользователей"},
-    )
-
-
-# ---- HTML Форма регистрации ----
 @router.get("/register", response_class=HTMLResponse)
-async def register_form(request: Request):
+async def register_page(request: Request):
+    """HTML Страница регистрации"""
     return templates.TemplateResponse("users/register.html", {"request": request})
 
 
-# ---- POST: Отправка формы регистрации ----
 @router.post("/register")
-@limiter.limit("3/hour")
-async def register_user(
+@limiter.limit("1/hour")
+async def register_submit(
     request: Request,
+    db: AsyncSession = Depends(get_db),
     username: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
-    db: AsyncSession = Depends(get_db),
+
 ):
-    await register(db, username, email, password)
-    return RedirectResponse(url="/user/login", status_code=303)
+    """Обработка HTML-страницы регистрации"""
+    try:
+        user = await create_user(db, username, email, password)
+
+        token = create_access_token(user.id)
+        response = RedirectResponse(url="/user/profile", status_code=303)
+        response.set_cookie(
+            key="access_token",
+            value=f"Bearer {token}",
+            httponly=True,
+            # secure=True,
+            samesite="strict",
+            max_age=7 * 24 * 3600
+        )
+        return response
+
+    except Exception as e:
+        # Для HTML возвращаем страницу с ошибкой
+        return templates.TemplateResponse(
+            "register.html",
+            {
+                "request": request,
+                "error": str(e),
+                "username": username,
+                "email": email
+            }
+        )
 
 
-# ---- HTML Форма входа ----
 @router.get("/login", response_class=HTMLResponse)
-async def login_form(request: Request):
+async def login_page(request: Request):
+    """HTML-страница входа"""
     return templates.TemplateResponse("users/login.html", {"request": request})
 
 
-# ---- POST: Отправка формы входа ----
 @router.post("/login")
 @limiter.limit("1/minute")
-async def login_user(
+async def login_submit(
     request: Request,
-    data: UserLogin = Depends(UserLogin.as_form),
     db: AsyncSession = Depends(get_db),
+    data: UserLogin = Depends(UserLogin.as_form),
 ):
-    result = await login(db, data.username, data.password)
-    if result is None:
+    """Обработка входа"""
+    user = await authenticate_user(db, data.username, data.password)
+
+    if not user:
         return templates.TemplateResponse(
-            "errors/404.html", {"request": request, "error": "Invalid credentials"}
+            "login.html",
+            {
+                "request": request,
+                "error": "Invalid username or password",
+                "username": data.username
+            }
         )
 
-    return RedirectResponse(url="/library", status_code=303)
+    token = create_access_token(user.id)
+    response = RedirectResponse(url="/user/me", status_code=status.HTTP_303_SEE_OTHER)
+    response.set_cookie(
+        key="access_token",
+        value=f"Bearer {token}",
+        httponly=True,
+        secure=False,  # ✅ True Только HTTPS (в production обязательно!)
+        samesite="lax",  # ✅ Защита от CSRF
+        max_age=7 * 24 * 3600,
+        # domain=None,  # Текущий домен
+        path="/"
+    )
+    return response
+
+
+@router.get("/me", response_class=HTMLResponse)
+async def profile_page(request: Request, current_user: User = Depends(get_current_user)):
+    """Страница профиля"""
+    return templates.TemplateResponse(
+        "users/info.html",
+        {
+            "request": request,
+            "user": current_user
+        }
+    )
 
 
 @router.get("/books/{user_id}", response_class=HTMLResponse)
 async def user_books(request: Request, db: DBType, user_id: int):
-    books = await book_by_user_id(db, user_id)
-    user = await user_info(db, user_id)
+    books = await get_user_books(db, user_id)
+    user = await get_user_by_id(db, user_id)
     if books or user is None:
         return templates.TemplateResponse("errors/404.html", {"request": request})
 
@@ -113,4 +159,21 @@ async def delete(request: Request, db: DBType, user_id: int):
         return templates.TemplateResponse("errors/404.html", {"request": request})
     return templates.TemplateResponse("books/delete.html", {"request": request})
 
+@router.get("/logout")
+async def logout():
+    """Выход из системы"""
+    response = RedirectResponse(url="/", status_code=303)
+    response.delete_cookie("access_token")
+    return response
 
+
+# ✅ Admin эндпоинты
+@router.get("/", response_class=HTMLResponse)
+async def all_users(request: Request, db: DBType):
+    users = await get_all_users(db)
+    if not users:
+        return templates.TemplateResponse("errors/404.html", {"request": request})
+    return templates.TemplateResponse(
+        "users/list.html",
+        {"request": request, "users": users, "title": "Список пользователей"},
+    )

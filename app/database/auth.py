@@ -1,15 +1,16 @@
-from fastapi import Depends, Request
+from fastapi import Depends, Request, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, ExpiredSignatureError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+import logging
 
 from app.core.exceptions import authorization_error
 from app.database.db_depends import get_db
 from app.models import User
 from app.utils.jwt import decode_access_token
 
-
+logger = logging.getLogger(__name__)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 
 
@@ -41,25 +42,44 @@ async def get_current_user(
             HTTPException 401: Если токен невалиден или пользователь не найден
     """
     if not token:
-        authorization_error("Not authenticated")
+        logger.warning("No token provided")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
     try:
         data = decode_access_token(token)
         user_id = int(data.get("sub"))
-        if not user_id:
-            raise ValueError("Missing subject in token")
-        user_id = int(user_id)
+
+        logger.debug(f"Token decoded: user_id={user_id}")
 
     except ExpiredSignatureError:
-        authorization_error("Token has expired")
-    except JWTError:
-        authorization_error("Could not validate credentials")
+        logger.warning("Token expired")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired"
+        )
+    except JWTError as e:
+        logger.error(f"JWT error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials"
+        )
     except (ValueError, TypeError) as e:
-        authorization_error(f"Invalid token format: {str(e)}")
+        logger.error(f"Token format error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid token format"
+        )
 
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
 
     if not user:
-        authorization_error("User not found")
-
+        logger.warning(f"User {user_id} not found in database")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found"
+        )
+    logger.info(f"✅ User authenticated: {user.id} - {user.username}")
     return user
