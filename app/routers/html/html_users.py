@@ -11,7 +11,7 @@ from app.core.config import settings
 from app.database.auth import get_current_user
 from app.database.db_depends import get_db
 from app.models import User
-from app.schemas.user import UserCreate, UserLogin
+from app.schemas.user import UserCreate, UserUpdate
 from app.services import user_service
 from app.utils.jwt import create_access_token
 
@@ -157,7 +157,7 @@ async def my_books_page(request: Request, db: DBType, current_user: CurrentUser)
 
 @router.put("/update", response_class=HTMLResponse)
 async def edit_user(
-    request: Request, db: DBType, user_id: int, update_u: UserCreate, password: str
+    request: Request, db: DBType, user_id: int, update_u: UserUpdate, password: str
 ):
     user = await user_service.update_user(db, user_id, password, update_u)
     if user is None:

@@ -4,10 +4,11 @@
 
 <h1>Библиотеки</h1>
 <ul>
-  {% for lib in libs %}
-    <li><a href="/library/">{{ lib.name }}</a></li>
+  {% for lib in libraries %}
+    <li><a href="/library/">{{ lib }}</a></li>
   {% else %}
     <li>Библиотек нет</li>
   {% endfor %}
 </ul>
+
 {% endblock %}
