@@ -9,12 +9,22 @@
 *.sqlite
 *.sqlite3
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+
 # Виртуальное окружение
 .venv/
 venv/
 env/
-__pycache__/
-*.pyc
+ENV/
 
 # IDEs
 .vscode/
@@ -26,23 +36,18 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# Кэш и логи
+# Logs
 *.log
 *.bak
 *.tmp
-*.swp
-__pycashe__/
 
-# Компиляция и билд
-build/
-dist/
-*.egg-info/
-
-# Тестовые артефакты
+# Coverage и тесты
 .coverage
-.pytest_cache/
 htmlcov/
 
-# Другие временные файлы
+# Alembic
+# alembic/versions/*.py  ← НЕ игнорируйте миграции!
+
+# Другие
 *.orig
 *.rej
