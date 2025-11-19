@@ -1,15 +1,15 @@
-{% extends "base.html" %}
+{% extends "base_registered.html" %}
 
 {% block crud_container %}
 <article class="card container fluid">
         <div class="card-body">
-            <h2>Пользователь #{{ user.id }}</h2>
+            <h2>Ваш id:{{ user.id }}</h2>
             <p><strong>Логин: </strong>{{ user.username }}</p>
             <p><strong>Имя: </strong>{{ user.firstname }}</p>
             <p><strong>Фамилия: </strong>{{ user.lastname }}</p>
             <p><strong>Время регистрации: </strong>{{ user.created_at }}</p>
-            <a href="/users"><- Назад к списку пользователей</a>
-            <a style="margin-left: 20%" href="/user/books/{{ user.id }}">Вперед к книгам -></a>
+
+            <a href="/update">Изменить профиль</a>
         </div>
 </article>
 {% endblock %}

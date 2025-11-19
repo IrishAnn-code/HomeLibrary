@@ -24,21 +24,21 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.get("/", response_model=None)
-async def libraries_list(db: DBType, user_id: CurrentUser):
-    """Все библиотеки пользователя"""
-    lib = await get_library(db, user_id.id)
-    if not lib:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Libraries not found")
-    return lib
+async def get_my_libraries(db: DBType, current_user: CurrentUser):
+    """
+    Получить все библиотеки текущего пользователя.
+    Требуется авторизация (токен в cookie или Authorization header).
+    """
+    libs = await list_user_libraries(db, current_user.id)
+    return libs
 
-
-@router.post("/create", response_model=None)
+@router.post("/", response_model=None)
 async def create_new_library(
     db: DBType, data: LibraryCreate, current_user: CurrentUser
 ):
-    return await create_library(db, data.name, data.password, current_user.id)
+    """Создать новую библиотеку."""
+    library = await create_library(db, data.name, data.password, current_user.id)
+    return library
 
 
 @router.post("/join", response_model=None)
@@ -69,16 +69,6 @@ async def library_books(db: DBType, lib_id: int):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Books not found")
     return books
-
-
-@router.get("/", response_model=None)
-async def get_my_libraries(db: DBType, current_user: CurrentUser):
-    """
-    Получить все библиотеки текущего пользователя.
-    Требуется авторизация (токен в cookie или Authorization header).
-    """
-    libs = await list_user_libraries(db, current_user.id)
-    return libs
 
 
 @router.put("/edit_name")

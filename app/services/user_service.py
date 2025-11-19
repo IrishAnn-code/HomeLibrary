@@ -1,14 +1,12 @@
-from sqlite3 import IntegrityError
-
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete, update
-
-from fastapi import status, HTTPException
+from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
+from fastapi import HTTPException, status
 import logging
-from app.models import Book
-from app.schemas.user import UserCreate, UserUpdate
+
+from app.models import Book, User
+from app.schemas.user import UserUpdate
 from app.utils.hashing import hash_password, verify_password
-from app.models.user import User
 
 
 logger = logging.getLogger(__name__)
@@ -27,7 +25,10 @@ async def get_all_users(db: AsyncSession, skip: int = 0, limit: int = 100):
         list[User]: Список пользователей
     """
     result = await db.scalars(
-        select(User).offset(skip).limit(limit).order_by(User.created_at.desc())
+        select(User)
+        .offset(skip)
+        .limit(limit)
+        .order_by(User.created_at.desc())
     )
     return result.all()
 
@@ -83,7 +84,7 @@ async def create_user(db: AsyncSession, username: str, email: str, password: str
             select(User).where((User.email == email) | (User.username == username))
         )
         if existing_user:
-            logger.warning(f"Attempt to create duplicate user: {username} / {email}")
+            logger.warning(f"⚠️ Attempt to create duplicate user: {username} / {email}")
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="User with this username or email already exists"
@@ -129,12 +130,15 @@ async def authenticate_user(db: AsyncSession, username: str, password: str) -> U
         User | None: Объект пользователя, если учетные данные верны, иначе None
     """
     user = await db.scalar(select(User).where(User.username == username))
+
     if not user:
         logger.warning(f"Login attempt for non-existent user: {username}")
         return None
+
     if not verify_password(password, user.password_hash):
         logger.warning(f"Invalid password for user: {username}")
         return None
+
     logger.info(f"✅ User authenticated: {user.id} - {user.username}")
     return user
 
@@ -161,7 +165,14 @@ async def get_user_books(db: AsyncSession, user_id: int, skip: int = 0, limit: i
             detail=f"User {user_id} not found"
         )
 
-    books = await db.scalars(select(Book).where(Book.user_id == user_id).offset(skip).limit(limit).order_by(Book.created_at.desc()))
+    books = await db.scalars(
+        select(Book)
+        .where(Book.user_id == user_id)
+        .offset(skip)
+        .limit(limit)
+        .order_by(Book.created_at.desc())
+    )
+
     return books.all()
 
 
@@ -181,6 +192,7 @@ async def update_user(db: AsyncSession, user_id: int, password: str, user_update
     Raises:
         HTTPException 404: Пользователь не найден
         HTTPException 401: Неверный текущий пароль
+        HTTPException 409: Email уже используется
         HTTPException 500: Ошибка обновления
     """
     try:
