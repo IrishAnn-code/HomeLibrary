@@ -1,9 +1,16 @@
 {% extends "base.html" %}
 
 {% block crud_container %}
-<h2 style="color:white">Добро пожаловать в приложение Домашняя библиотека</h2>
+
+{% if user %}
+<h2 style="text-align:center">Уважаемый(ая) {{ user.username }}!</h2>
+<br>
+<h4 style="text-align:center">Добро пожаловать в приложение</h4>
+<h4 style="text-align:center">Домашняя библиотека.</h4>
+{% else %}
 <p>Попытка - не пытка</p>
 <p>Для того, чтобы воспользоваться сайтом, пожалуйста, зарегистрируйтесь или войдите в систему</p>
+{% endif %}
 
 {% endblock %}
 
