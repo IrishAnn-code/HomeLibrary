@@ -14,12 +14,14 @@ from app.models import User
 from app.schemas.user import UserCreate, UserUpdate
 from app.services import user_service
 from app.utils.jwt import create_access_token
+from app.utils.flash import flash, get_flashed_messages
 
 router = APIRouter(prefix="/user", tags=["Users (HTML)"])
 templates = Jinja2Templates(directory="app/templates")
 limiter = Limiter(key_func=get_remote_address)
 
 logger = logging.getLogger(__name__)
+
 DBType = Annotated[AsyncSession, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
@@ -46,7 +48,7 @@ async def register_submit(
 
         token = create_access_token(user.id)
 
-        response = RedirectResponse(url="/user/me", status_code=303)
+        response = RedirectResponse(url="/", status_code=303)
         response.set_cookie(
             key="access_token",
             value=token,
@@ -93,19 +95,14 @@ async def login_submit(
 
     if not user:
         logger.warning(f"❌ Invalid credentials for: {username}")
-        return templates.TemplateResponse(
-            "users/login.html",
-            {
-                "request": request,
-                "error": "Invalid username or password",
-                "username": username
-            }
-        )
+        # ❌ Ошибка - добавляем flash
+        flash(request, "Неверное имя пользователя или пароль", "error")
+        return RedirectResponse(url="/user/login", status_code=303)
 
     token = create_access_token(user.id)
     logger.info(f"✅ Token created for user {user.id}: {token[:20]}...")
 
-    response = RedirectResponse(url="/library", status_code=status.HTTP_303_SEE_OTHER)
+    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     response.set_cookie(
         key="access_token",
         value=token,
@@ -118,6 +115,8 @@ async def login_submit(
     )
 
     logger.info(f"✅ Cookie set for user {user.id}")
+    # ✅ Успех - добавляем flash
+    flash(request, f"Добро пожаловать, {user.username}!", "success")
     return response
 
 
