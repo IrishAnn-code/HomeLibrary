@@ -17,7 +17,7 @@ from app.services.library_service import (
 )
 
 
-router = APIRouter(prefix="/library", tags=["Library (API)"])
+router = APIRouter(prefix="/libraries", tags=["Library (API)"])
 
 DBType = Annotated[AsyncSession, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]

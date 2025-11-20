@@ -12,7 +12,7 @@ from app.services.book_service import (
 )
 
 
-router = APIRouter(prefix="/api/books", tags=["Books (API)"])
+router = APIRouter(prefix="/books", tags=["Books (API)"])
 DBType = Annotated[AsyncSession, Depends(get_db)]
 
 

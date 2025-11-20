@@ -20,7 +20,7 @@ from app.services.library_service import list_user_libraries
 from app.services.user_service import get_user_books
 from app.utils.flash import get_flashed_messages
 
-router = APIRouter(prefix="/books", tags=["Books (HTML)"])
+router = APIRouter(prefix="/book", tags=["Books (HTML)"])
 templates = Jinja2Templates(directory="app/templates")
 
 DBType = Annotated[AsyncSession, Depends(get_db)]
