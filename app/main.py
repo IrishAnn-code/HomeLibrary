@@ -1,19 +1,26 @@
-from fastapi import FastAPI, Request
+from typing import Annotated
+
+from fastapi import FastAPI, Request, Depends
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from slowapi.middleware import SlowAPIMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
+from app.database.auth import get_current_user_optional
+from app.models import User
 from app.routers.api import api_books, api_users, api_libraries
-from app.routers.html import html_books, html_users, html_libraries
+from app.routers.html import html_book, html_user, html_library
 from app.core.config import settings
 
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 import logging
+
+from app.utils.flash import get_flashed_messages
 
 # ✅ Настройка логирования
 logging.basicConfig(
@@ -61,6 +68,13 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+# Flash messages
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SECRET_KEY,
+    max_age=7 * 24 * 3600  # 7 дней
+)
+
 # ✅ Добавляем SlowAPI middleware
 app.add_middleware(SlowAPIMiddleware)
 
@@ -75,12 +89,19 @@ app.add_middleware(
 
 # Шаблоны
 templates = Jinja2Templates(directory="app/templates")
+CurrentUser = Annotated[User, Depends(get_current_user_optional)]
 
 
 @app.get("/", response_class=HTMLResponse)
-async def read_root(request: Request):
+async def read_root(request: Request, current_user: CurrentUser):
     return templates.TemplateResponse(
-        "index.html", {"request": request, "title": "Главная страница"}
+        "index.html",
+        {
+            "request": request,
+            "title": "Главная страница",
+            "user": current_user,
+            "messages": get_flashed_messages(request)
+        }
     )
 
 
@@ -94,9 +115,9 @@ async def health_check():
 app.include_router(api_users.router)
 app.include_router(api_books.router)  # Позволит подключать другие роутеры
 app.include_router(api_libraries.router)
-app.include_router(html_users.router)
-app.include_router(html_books.router)
-app.include_router(html_libraries.router)
+app.include_router(html_user.router)
+app.include_router(html_book.router)
+app.include_router(html_library.router)
 
 
 # запуск python3 -m uvicorn app.main:app
