@@ -1,9 +1,14 @@
 {% extends "base.html" %}
 
 {% block crud_container %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h2>Мои библиотеки</h2>
-  <a href="/library/create" class="btn btn-success">➕ Создать библиотеку</a>
+<div class="d-flex bd-highlight mb-3">
+  <div class="me-auto p-1 bd-highlight fs-3">Мои библиотеки</div>
+  <div class="p-2 bd-highlight">
+    <a href="/library/create" class="btn btn-success">➕ Создать</a>
+  </div>
+  <div class="p-2 bd-highlight">
+    <a href="/library/join" class="btn btn-success">🔗 Присоединиться</a>
+  </div>
 </div>
 
 {% if libraries %}
