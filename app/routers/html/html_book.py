@@ -1,13 +1,15 @@
+import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Request, Depends, Form
+from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.auth import get_current_user
 from app.database.db_depends import get_db
-from app.models import User
+from app.models import User, Library
+from app.models.enum import GenreStatus
 from app.schemas.book import BookUpdate, BookCreate
 from app.services.book_service import (
     get_all_books,
@@ -18,10 +20,12 @@ from app.services.book_service import (
 )
 from app.services.library_service import list_user_libraries
 from app.services.user_service import get_user_books
-from app.utils.flash import get_flashed_messages
+from app.utils.flash import get_flashed_messages, flash
 
 router = APIRouter(prefix="/book", tags=["Books (HTML)"])
 templates = Jinja2Templates(directory="app/templates")
+
+logger = logging.getLogger(__name__)
 
 DBType = Annotated[AsyncSession, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
@@ -59,30 +63,13 @@ async def my_books(request: Request, db: DBType, current_user: CurrentUser):
     )
 
 
-@router.get("/{book_id}", response_class=HTMLResponse)
-async def book_detail(
-        request: Request,
-        db: DBType,
-        book_id: int,
-        current_user: CurrentUser
-):
-    """Страница книги"""
-    book = await get_book_by_id(db, book_id)
-    if not book:
-        return templates.TemplateResponse("errors/404.html", {"request": request})
-
-    return templates.TemplateResponse(
-        "books/info.html",
-        {"request": request, "book": book, "user": current_user}
-    )
-
 @router.get("/create", response_class=HTMLResponse)
 async def create_book_page(request: Request, db: DBType, current_user: CurrentUser):
     """Страница добавления книги"""
     libraries = await list_user_libraries(db, current_user.id)
     return templates.TemplateResponse(
         "books/create.html",
-        {"request": request, "libraries": libraries, "user": current_user}
+        {"request": request, "libraries": libraries, "user": current_user, "genres": list(GenreStatus)}
     )
 
 
@@ -95,29 +82,38 @@ async def create_book_submit(
     title: str = Form(...),
     description: str = Form(None),
     genre: str = Form(None),
+    color: str = Form(None),
+    read_status: str = Form(...),
+    room: str = Form(None),
+    shelf: str = Form(None),
     library_id: int = Form(...)
 ):
     """Обработка добавления книги"""
     try:
+        library = await db.get(Library, library_id)
+        if not library:
+            raise HTTPException(status_code=404, detail="Библиотека не найдена" )
         book_data = BookCreate(
-            author=author,
-            title=title,
+            author=author.title(),
+            title=title.capitalize(),
             description=description,
             genre=genre,
-            color="#3498db",
-            read_status="not_read",
-            lib_address="",
-            room="",
-            shelf=""
+            color=color,
+            read_status=read_status,
+            lib_address=library.name,
+            room=room.capitalize(),
+            shelf=shelf.capitalize()
         )
         book = await create_book(db, book_data, current_user.id, library_id)
-        return RedirectResponse(url=f"/books/{book.id}", status_code=303)
+        flash(request, "Книга успешно добавлена", "success")
+        return RedirectResponse(url=f"/book/{book.id}", status_code=303)
     except Exception as e:
+        flash(request, "Не удалось добавить книгу", "error")
         libraries = await list_user_libraries(db, current_user.id)
         return templates.TemplateResponse(
             "books/create.html",
-            {"request": request, "error": str(e), "libraries": libraries, "user": current_user}
-        )
+            {"request": request, "error": str(e), "libraries": libraries, "user": current_user, "genres": list(GenreStatus)})
+
 
 @router.put("/update", response_class=HTMLResponse)
 async def edit_task(
@@ -165,3 +161,21 @@ async def delete_page(request: Request, db: DBType, book_id: int):
     if not task:
         return templates.TemplateResponse("errors/404.html", {"request": request})
     return templates.TemplateResponse("books/delete_id.html", {"request": request})
+
+
+@router.get("/{book_id}", response_class=HTMLResponse)
+async def book_detail(
+        request: Request,
+        db: DBType,
+        book_id: int,
+        current_user: CurrentUser
+):
+    """Страница книги"""
+    book = await get_book_by_id(db, book_id)
+    if not book:
+        return templates.TemplateResponse("errors/404.html", {"request": request})
+
+    return templates.TemplateResponse(
+        "books/info.html",
+        {"request": request, "book": book, "user": current_user}
+    )
