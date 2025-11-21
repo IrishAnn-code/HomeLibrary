@@ -4,17 +4,46 @@
 <article class="card container fluid">
         <div class="card-body">
             <h2>{{ book.author }}: {{ book.title }}</h2>
-            <p><strong>Статус прочтения: </strong>{{ book.read_status }}</p>
-            <p><strong>Жанр: </strong>{{ book.genre }}</p>
+            <p><strong>Статус прочтения: </strong>{{ book.read_status.russian_name }}</p>
+            <p><strong>Жанр: </strong>{{ book.genre.russian_name|title }}</p>
             <p><strong>Описание: </strong>{{ book.description }}</p>
-            <p><strong>Адрес библиотеки: </strong>{{ book.lib_address }}</p>
+            <p><strong>Библиотека: </strong>{{ book.lib_address }}</p>
             <p><strong>Комната: </strong>{{ book.room }}</p>
             <p><strong>Полка: </strong>{{ book.shelf }}</p>
-            <p><strong>Цвет обложки: </strong>{{ book.color }}</p>
 
-            <p><strong>username: </strong> <a href="/users/{{ user.id }}">{{ user.username }}</a></p>
+            <div class="book-color">
+            <p>
+                <strong>Цвет обложки: </strong>
+                <span class="color-visual" style="background-color: {{ book.color }};"></span>
+            </p>
+            </div>
 
-            <a href="/users/books/ {{ user.id }}">← Назад к списку книг {{ user.username }}</a>
+            <p><strong>Добавлен: </strong> <a href="/users/{{ user.id }}">{{ user.username }}</a></p>
+
+            <a href="/book">← К списку книг {{ user.username }}</a>
         </div>
+
 </article>
+<style>
+.book-color {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.color-visual {
+  width: 25px;
+  height: 25px;
+  border-radius: 10px;
+  border: 1px solid #dee2e6;
+  display: inline-block;
+}
+
+/* На мобильных скрываем код */
+@media (max-width: 768px) {
+  .color-code {
+    display: none;
+  }
+}
+</style>
 {% endblock %}
