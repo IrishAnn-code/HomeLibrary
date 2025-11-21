@@ -10,8 +10,7 @@ from app.database.auth import get_current_user
 from app.database.db_depends import get_db
 from app.models import User
 from app.services import library_service
-from app.utils.flash import get_flashed_messages
-
+from app.utils.flash import get_flashed_messages, flash
 
 router = APIRouter(prefix="/library", tags=["Libraries (HTML)"])
 templates = Jinja2Templates(directory="app/templates")
@@ -27,10 +26,6 @@ async def libraries_list(request: Request, db: DBType, current_user: CurrentUser
     """Список всех библиотек пользователя"""
 
     libraries = await library_service.list_user_libraries(db, current_user.id)
-    logger.info(f"Libraries type: {type(libraries)}")
-    logger.info(f"Libraries value: {libraries}")
-    logger.info(f"Libraries length: {len(libraries)}")
-    logger.info(f"Bool evaluation: {bool(libraries)}")
     return templates.TemplateResponse(
         "libraries/list.html",
         {
@@ -41,11 +36,6 @@ async def libraries_list(request: Request, db: DBType, current_user: CurrentUser
             "messages": get_flashed_messages(request)
         }
     )
-
-@router.get("/test")
-async def test_route(request: Request):
-    print("🎯 TEST ROUTE HIT!")
-    return HTMLResponse("<h1>Test route works!</h1>")
 
 
 @router.get("/create", response_class=HTMLResponse)
@@ -67,7 +57,8 @@ async def create_library_submit(
 ):
     """Обработка создания библиотеки"""
     try:
-        library = await library_service.create_library(db, name, password, current_user.id)
+        await library_service.create_library(db, name, password, current_user.id)
+        flash(request, f"Библиотека для {current_user.username} успешно создана!", "success")
         return RedirectResponse(url="/library/", status_code=303)
     except Exception as e:
         return templates.TemplateResponse(
