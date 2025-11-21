@@ -12,10 +12,11 @@
     <table class="table table-striped table-hover">
       <thead class="table-light">
         <tr>
-          <th>ID</th>
-          <th>Автор</th>
-          <th>Название</th>
-          <th>Жанр</th>
+          <th style="width: 10px;">ID</th>
+          <th style="width: 17%;">Автор</th>
+          <th style="min-width: 100px;">Название</th>
+          <th style="width: 10%;">Жанр</th>
+          <th>Описание</th>
           <th>Статус</th>
           <th>Адрес</th>
         </tr>
@@ -27,14 +28,12 @@
           <td>{{ book.author }}</td>
           <td><a href="/book/{{ book.id }}" class="text-decoration-none">{{ book.title }}</a></td>
           <td>{{ book.genre }}</td>
+          <td>{{ book.description }}</td>
           <td>
-            <span class="badge
-              {% if book.read_status == 'Прочитано' %}bg-success
-              {% elif book.read_status == 'Читаю' %}bg-warning
-              {% elif book.read_status == 'Хочу прочитать' %}bg-info
-              {% else %}bg-secondary{% endif %}">
-              {{ book.read_status }}
-            </span>
+            <p class="card-text text-dark">
+              <span class="badge bg-{{ 'success' if book.read_status == 'read' else 'warning' if book.read_status == 'reading' else 'secondary' }}">
+                {{ book.read_status.russian_name }}</span>
+            </p>
           </td>
           <td>{{ book.lib_address }}</td>
         </tr>
@@ -44,7 +43,7 @@
   </div>
 </div>
 {% else %}
-<div class="alert alert-light border">  <!-- ✅ Убрали белую линию -->
+<div class="alert alert-light border">
   <h4 class="alert-heading">📚 У вас пока нет книг</h4>
   <p class="mb-3">Добавьте свою первую книгу или присоединитесь к библиотеке!</p>
   <div class="mt-3">
