@@ -1,10 +1,49 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block crud_container %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>📚 {{ library.name }}</h2>
+  <a href="/book/create?library_id={{ library.id }}" class="btn btn-success">➕ Добавить книгу</a>
+</div>
+
+{% if books %}
+<div class="card">
+  <div class="card-body">
+    <table class="table table-striped table-hover">
+      <thead class="table-light">
+        <tr>
+          <th>Автор</th>
+          <th>Название</th>
+          <th>Жанр</th>
+          <th>Статус</th>
+          <th>Адрес</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for book in books %}
+        <tr>
+          <td>{{ book.author }}</td>
+          <td><a href="/book/{{ book.id }}" class="text-decoration-none">{{ book.title }}</a></td>
+          <td>{{ book.genre }}</td>
+          <td>
+            <p class="card-text text-dark">
+              <span class="badge bg-{{ 'success' if book.read_status == 'read' else 'warning' if book.read_status == 'reading' else 'secondary' }}">
+                {{ book.read_status.russian_name }}</span>
+            </p>
+          </td>
+          <td>{{ book.lib_address }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+  <div class="alert alert-info">
+    <p class="mb-0">В этой библиотеке пока нет книг. Добавьте первую!</p>
+  </div>
+{% endif %}
+<div class="d-flex justify-content-end">
+  id: {{ library.id }}
+</div>
+{% endblock %}
