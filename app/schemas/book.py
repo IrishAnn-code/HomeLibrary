@@ -1,13 +1,13 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from app.models.enum import ReadStatus
+from app.models.enum import ReadStatus, GenreStatus
 
 
 class BookCreate(BaseModel):
     author: str = Field(..., min_length=1, max_length=200)
     title: str = Field(..., min_length=1, max_length=300)
     description: str | None = Field(None, max_length=2000)
-    genre: str | None = Field(None, max_length=100)
+    genre: GenreStatus = Field(default=GenreStatus.OTHER)
     color: str | None = Field(None, pattern="^#[0-9A-Fa-f]{6}$")  # HEX цвет
     read_status: ReadStatus = Field(default=ReadStatus.NOT_READ)
     lib_address: str = Field(..., max_length=100)
