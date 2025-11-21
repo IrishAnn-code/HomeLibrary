@@ -59,17 +59,17 @@ async def create_book(db: AsyncSession, data: BookCreate, user_id: int, library_
         db.add(book)
         await db.commit()
         await db.refresh(book)
-        logger.info(f"Book created: {book.id} - {book.title}")
+        logger.info(f"✅ Book created: {book.id} - {book.title}")
         return book
     except HTTPException:
         raise
     except IntegrityError as e:
         await db.rollback()
-        logger.error(f"IntegrityError creating book: {e}")
+        logger.error(f"❌ IntegrityError creating book: {e}")
         raise conflict("Book with this slug already exists")
     except Exception as e:
         await db.rollback()
-        logger.error(f"Error creating book: {e}")
+        logger.error(f"❌ Error creating book: {e}")
         raise server_error("Failed to create book")
 
 

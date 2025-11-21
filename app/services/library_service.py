@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, update
 
@@ -5,7 +6,9 @@ from app.core.exceptions import not_found, authorization_error, bad_request
 from app.models import Book, User, Library, UserLibrary
 from app.utils.hashing import hash_password, verify_password
 from app.utils.helpers import make_slug
+import logging
 
+logger = logging.getLogger(__name__)
 
 async def get_libraries(db: AsyncSession):
     """Список всех библиотек"""
@@ -52,19 +55,26 @@ async def create_library(
     db: AsyncSession, name: str, password: str | None, owner_id: int
 ):
     """Создать новую библиотеку, связь с UserLibrary"""
-    if not name or name.strip():
-        return None
-    slug = make_slug(name)
-    hashed = hash_password(password) if password else None
-    lib = Library(name=name, password_hash=hashed, slug=slug, owner_id=owner_id)
-    db.add(lib)
-    await db.commit()
-    await db.refresh(lib)
-    # Добавляем владельца как участника
-    membership = UserLibrary(user_id=owner_id, library_id=lib.id, role="owner")
-    db.add(membership)
-    await db.commit()
-    return lib
+    if not name:
+        raise HTTPException(status_code=400, detail="Library name cannot be empty")
+    try:
+        slug = make_slug(name)
+        hashed = hash_password(password) if password else None
+
+        lib = Library(name=name, password_hash=hashed, slug=slug, owner_id=owner_id)
+        db.add(lib)
+        await db.flush() # Получаем lib.id без commit
+
+        # Добавляем владельца как участника
+        membership = UserLibrary(user_id=owner_id, library_id=lib.id, role="owner")
+        db.add(membership)
+        await db.commit()
+        await db.refresh(lib)
+        logger.info(f'✅ Библиотека с названием {name} для пользователя {owner_id} успешно создана!')
+        return lib
+    except Exception as e:
+        await db.rollback()
+        raise
 
 
 async def join_library(
