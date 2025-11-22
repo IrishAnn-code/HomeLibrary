@@ -21,13 +21,17 @@
     </div>
 
     <div class="mb-3">
-      <label for="genre" class="form-label">Жанр:</label>
-      <select id="genre" name="genre" class="form-select" required>
-        <option value="">Выберите жанр</option>
-        {% for genre in genres|sort(attribute='russian_name') %}
-          <option value="{{ genre.value }}">{{ genre.russian_name|title }}</option>
+      <label class="form-label text-dark">Жанр</label>
+      <input type="text" name="genre" class="form-control"
+         list="genre-suggestions" placeholder="Введите жанр">
+
+      <!-- ✅ Datalist с популярными жанрами -->
+      <datalist id="genre-suggestions">
+        {% for g in popular_genres %}
+          <option value="{{ g.genre }}">{{ g.count }} книг</option>
         {% endfor %}
-      </select>
+      </datalist>
+      <small class="text-muted">Начните вводить или выберите из списка</small>
     </div>
 
     <div class="mb-3">

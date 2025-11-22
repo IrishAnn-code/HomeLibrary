@@ -1,30 +1,40 @@
 {% extends 'base.html'%}
 {% block crud_container %}
-<section class="container-fluid">
-    <h2 align="center" style="color: white"> Список книг пользователя {{ user.username }}</h2>
-    <br>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>Книги добавленные мной:</h2>
+  <a href="/book/create" class="btn btn-success">➕ Добавить книгу</a>
+</div>
+
     <div class="card">
-        <table border="1" cellpadding="6">
+        <table class="table table-striped table-hover">
           <tr>
-            <th>Автор</th>
-            <th>Название</th>
-            <th>Описание</th>
-            <th>Жанр</th>
-            <th>Статус</th>
+          <th style="width: 17%;">Автор</th>
+          <th style="min-width: 100px;">Название</th>
+          <th style="width: 10%;">Жанр</th>
+          <th>Описание</th>
+          <th>Статус</th>
+          <th>Адрес</th>
           </tr>
           {% for book in books %}
           <tr>
             <td>{{ book.author }}</td>
             <td><a href="/book/{{ book.id }}">{{ book.title }}</a></td>
-            <td>{{ book.description }}</td>
             <td>{{ book.genre }}</td>
-            <td>{{ book.read_status}}</td>
+            <td>{{ book.description }}</td>
+            <td>
+            <p class="card-text text-dark">
+              <span class="badge bg-{{ 'success' if book.read_status == 'read' else 'warning' if book.read_status == 'reading' else 'secondary' }}">
+                {{ book.read_status.russian_name }}</span>
+            </p>
+            </td>
+            <td>{{ book.lib_address }}</td>
           </tr>
           {% else %}
           <tr><td colspan="6">Нет книг</td></tr>
           {% endfor %}
         </table>
     </div>
-</section>
+
 
 {% endblock %}

@@ -2,28 +2,116 @@
 
 {% block crud_container %}
 <article class="card container fluid">
-        <div class="card-body">
-            <h2>{{ book.author }}: {{ book.title }}</h2>
-            <p><strong>Статус прочтения: </strong>{{ book.read_status.russian_name }}</p>
-            <p><strong>Жанр: </strong>{{ book.genre.russian_name|title }}</p>
-            <p><strong>Описание: </strong>{{ book.description }}</p>
-            <p><strong>Библиотека: </strong>{{ book.lib_address }}</p>
-            <p><strong>Комната: </strong>{{ book.room }}</p>
-            <p><strong>Полка: </strong>{{ book.shelf }}</p>
-
-            <div class="book-color">
-            <p>
-                <strong>Цвет обложки: </strong>
-                <span class="color-visual" style="background-color: {{ book.color }};"></span>
-            </p>
+    <div class="d-flex bd-highlight mb-3">
+        <div class="me-auto p-3 bd-highlight fs-4">{{ book.author }}: {{ book.title }}</div>
+        {% if book.user_id == current_user.id %}
+            <div class="btn-group">
+            <a href="/book/{{ book.id }}/edit" class="btn btn-outline-secondary d-flex align-items-center" >✏️</a>
+            <!-- ✅ Удаление с подтверждением -->
+            <button type="button" class="btn btn-outline-danger"
+                    onclick="confirmDelete({{ book.id }}, '{{ book.title }}')">🗑</button>
             </div>
+        {% else %}
+        <!--
+          <div class="p-2 bd-highlight">
+            <a href="/library/join" class="btn btn-success">🔗 Присоединиться</a>
+          </div>
+        -->
+        {% endif %}
+    </div>
 
-            <p><strong>Добавлен: </strong> <a href="/users/{{ user.id }}">{{ user.username }}</a></p>
-
-            <a href="/book">← К списку книг {{ user.username }}</a>
+    <div class="row">
+        <!-- Левый столбец -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Информация о книге</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td class="fw-bold" style="width: 40%;">Статус прочтения:</td>
+                            <td>{{ book.read_status.russian_name }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Жанр</td>:
+                            <td>{{ book.genre }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Описание:</td>
+                            <td>{{ book.description or "Нет описания" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Цвет обложки:</td>
+                            <td><div class="book-color">
+                                <span class="color-visual" style="background-color: {{ book.color }};"></span>
+                            </div></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
         </div>
 
+        <!-- Правый столбец -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Расположение</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td class="fw-bold" style="width: 40%;">Библиотека:</td>
+                            <td>{{ book.lib_address }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Комната</td>:
+                            <td>{{ book.room or "Нет описания" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Полка:</td>
+                            <td>{{ book.shelf or "Нет описания" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Добавлена:</td>
+                            <td>{{ user.username }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+    <br>
+    <div class="d-flex justify-content-center">
+        <a href="/book" class="btn btn-success">К списку книг</a>
+    </div>
+    <br>
 </article>
+
+<!-- ✅ Modal для подтверждения -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-dark">Подтверждение удаления</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-dark">
+        <p>Вы действительно хотите удалить книгу <strong id="book-title"></strong>?</p>
+          <p class="text-danger">Это действие нельзя отменить!</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Отмена
+        </button>
+        <form id="deleteForm" method="post" style="display:inline;">
+          <button type="submit" class="btn btn-danger">
+            Удалить
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <style>
 .book-color {
   display: flex;
@@ -46,4 +134,19 @@
   }
 }
 </style>
+
+<script>
+function confirmDelete(bookId, bookTitle) {
+  // Устанавливаем название книги
+  document.getElementById('book-title').textContent = bookTitle;
+
+  // Устанавливаем action формы
+  document.getElementById('deleteForm').action = `/book/${bookId}/delete`;
+
+  // Показываем modal
+  const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+  modal.show();
+}
+</script>
+
 {% endblock %}
