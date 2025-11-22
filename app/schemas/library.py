@@ -6,6 +6,7 @@ from app.schemas.book import BookOut
 
 class LibraryBase(BaseModel):
     """Базовая схема библиотеки"""
+
     name: str = Field(
         ...,
         min_length=3,
@@ -17,6 +18,7 @@ class LibraryBase(BaseModel):
 
 class LibraryCreate(LibraryBase):
     """Схема для создания библиотеки"""
+
     password: str | None = Field(
         None,
         min_length=4,

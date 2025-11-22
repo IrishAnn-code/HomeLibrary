@@ -32,6 +32,7 @@ async def get_my_libraries(db: DBType, current_user: CurrentUser):
     libs = await list_user_libraries(db, current_user.id)
     return libs
 
+
 @router.post("/", response_model=None)
 async def create_new_library(
     db: DBType, data: LibraryCreate, current_user: CurrentUser
@@ -55,8 +56,8 @@ async def get_lib(db: DBType, slug: str):
     lib = await get_library_by_slug(db, slug)
     if not lib:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Library not found")
+            status_code=status.HTTP_404_NOT_FOUND, detail="Library not found"
+        )
     return lib
 
 
@@ -66,8 +67,8 @@ async def library_books(db: DBType, lib_id: int):
     books = await all_books_in_lib(db, lib_id)
     if not books:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Books not found")
+            status_code=status.HTTP_404_NOT_FOUND, detail="Books not found"
+        )
     return books
 
 

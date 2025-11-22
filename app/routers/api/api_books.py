@@ -21,8 +21,8 @@ async def read_books(db: DBType):
     books = await get_all_books(db)
     if not books:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Book was not found")
+            status_code=status.HTTP_404_NOT_FOUND, detail="Book was not found"
+        )
     return books
 
 
@@ -31,8 +31,8 @@ async def get_users_book(db: DBType, book_id: int):
     book = await get_book_by_id(db, book_id)
     if not book:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Book was not found")
+            status_code=status.HTTP_404_NOT_FOUND, detail="Book was not found"
+        )
     return book
 
 
@@ -41,8 +41,8 @@ async def add_book(db: DBType, create_b: BookCreate, user_id: int, lib_id: int):
     book = await create_book(db, create_b, user_id, lib_id)
     if not book:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Book was not added")
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Book was not added"
+        )
     return {"status_code": status.HTTP_201_CREATED, "transaction": "Successful"}
 
 
@@ -51,8 +51,8 @@ async def edit_book(db: DBType, user_id: int, book_id: int, book_update: BookUpd
     book = await update_book(db, user_id, book_id, book_update)
     if not book:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User or book was not found")
+            status_code=status.HTTP_404_NOT_FOUND, detail="User or book was not found"
+        )
     return {
         "status_code": status.HTTP_200_OK,
         "transaction": "Book update is successful",
@@ -65,5 +65,6 @@ async def remove_book(db: DBType, book_id: int):
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Book: {get_book_by_id(db, book_id)} was not found")
+            detail=f"Book: {get_book_by_id(db, book_id)} was not found",
+        )
     return {"status": "deleted"}

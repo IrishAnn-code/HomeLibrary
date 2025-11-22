@@ -40,7 +40,6 @@ async def register_submit(
     username: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
-
 ):
     """Обработка HTML-страницы регистрации"""
     try:
@@ -53,10 +52,10 @@ async def register_submit(
             key="access_token",
             value=token,
             httponly=True,
-            secure=not settings.DEBUG, # False для dev, True для prod
+            secure=not settings.DEBUG,  # False для dev, True для prod
             samesite="lax",
             max_age=7 * 24 * 3600,
-            path="/"
+            path="/",
         )
         logger.info(f"✅ User registered and logged in: {user.id}")
         return response
@@ -66,12 +65,7 @@ async def register_submit(
         logger.error(f"Registration error: {e}")
         return templates.TemplateResponse(
             "users/register.html",
-            {
-                "request": request,
-                "error": str(e),
-                "username": username,
-                "email": email
-            }
+            {"request": request, "error": str(e), "username": username, "email": email},
         )
 
 
@@ -84,10 +78,7 @@ async def login_page(request: Request):
 @router.post("/login")
 @limiter.limit("5/minute")
 async def login_submit(
-    request: Request,
-    db: DBType,
-    username: str = Form(...),
-    password: str = Form(...)
+    request: Request, db: DBType, username: str = Form(...), password: str = Form(...)
 ):
     """Обработка входа"""
     logger.info(f"🔐 Login attempt: {username}")
@@ -111,7 +102,7 @@ async def login_submit(
         samesite="lax",  # ✅ Защита от CSRF
         max_age=7 * 24 * 3600,
         # domain=None,  # Текущий домен
-        path="/"
+        path="/",
     )
 
     logger.info(f"✅ Cookie set for user {user.id}")
@@ -124,12 +115,9 @@ async def login_submit(
 async def profile_page(request: Request, user: CurrentUser):
     """Страница профиля"""
     return templates.TemplateResponse(
-        "users/info.html",
-        {
-            "request": request,
-            "user": user
-        }
+        "users/info.html", {"request": request, "user": user}
     )
+
 
 @router.get("/logout")
 async def logout():
@@ -149,7 +137,7 @@ async def my_books_page(request: Request, db: DBType, current_user: CurrentUser)
             "request": request,
             "books": books,
             "user": current_user,
-            "title": "Мои книги"
+            "title": "Мои книги",
         },
     )
 
@@ -183,9 +171,5 @@ async def all_users_page(request: Request, db: DBType, current_user: CurrentUser
         return templates.TemplateResponse("errors/404.html", {"request": request})
     return templates.TemplateResponse(
         "users/list.html",
-        {
-            "request": request,
-            "users": users,
-            "title": "Список пользователей"
-        },
+        {"request": request, "users": users, "title": "Список пользователей"},
     )

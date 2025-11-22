@@ -45,17 +45,18 @@ async def register_user(request: Request, db: DBType, data: UserCreate):
     return user
 
 
-@router.get("/me",
-            response_model=UserOut,
-            summary='Get information about the current user')
+@router.get(
+    "/me", response_model=UserOut, summary="Get information about the current user"
+)
 async def get_my_profile(current_user: CurrentUser):
     """Получить профиль текущего авторизованного пользователя."""
     return current_user
 
 
-@router.get("/me/books",
-            summary='Get books from the current user')
-async def get_my_books(db: DBType, current_user: CurrentUser, skip: int = 0, limit: int = 100):
+@router.get("/me/books", summary="Get books from the current user")
+async def get_my_books(
+    db: DBType, current_user: CurrentUser, skip: int = 0, limit: int = 100
+):
     """
     Получить все книги текущего пользователя с пагинацией.
 
@@ -66,14 +67,9 @@ async def get_my_books(db: DBType, current_user: CurrentUser, skip: int = 0, lim
     return books
 
 
-@router.put("/me",
-            response_model=UserOut,
-            summary="Update the current user's profile" )
+@router.put("/me", response_model=UserOut, summary="Update the current user's profile")
 async def update_my_profile(
-    db: DBType,
-    password: str,
-    user_update: UserUpdate,
-    current_user: CurrentUser
+    db: DBType, password: str, user_update: UserUpdate, current_user: CurrentUser
 ):
     """
     Обновить данные своего профиля.
@@ -88,9 +84,9 @@ async def update_my_profile(
     return updated_user
 
 
-@router.delete("/me",
-               status_code=status.HTTP_204_NO_CONTENT,
-               summary="Delete your account")
+@router.delete(
+    "/me", status_code=status.HTTP_204_NO_CONTENT, summary="Delete your account"
+)
 async def delete_my_account(db: DBType, current_user: CurrentUser):
     """Удалить свой аккаунт навсегда."""
     await delete_user(db, current_user.id)
@@ -99,15 +95,13 @@ async def delete_my_account(db: DBType, current_user: CurrentUser):
 
 # ✅ Admin эндпоинты
 @router.get(
-    "/",
-    response_model=list[UserOut],
-    summary="[Admin] Получить всех пользователей"
+    "/", response_model=list[UserOut], summary="[Admin] Получить всех пользователей"
 )
 async def get_all_users(
     db: DBType,
     current_user: CurrentUser,  # TODO: добавить проверку is_admin
     skip: int = 0,
-    limit: int = 100
+    limit: int = 100,
 ):
     """Получить список всех пользователей (только для админов)."""
     # TODO: добавить проверку is_admin

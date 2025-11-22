@@ -7,7 +7,7 @@ class BookCreate(BaseModel):
     author: str = Field(..., min_length=1, max_length=200)
     title: str = Field(..., min_length=1, max_length=300)
     description: str | None = Field(None, max_length=2000)
-    genre: GenreStatus = Field(default=GenreStatus.OTHER)
+    genre: str | None = Field(None)
     color: str | None = Field(None, pattern="^#[0-9A-Fa-f]{6}$")  # HEX цвет
     read_status: ReadStatus = Field(default=ReadStatus.NOT_READ)
     lib_address: str = Field(..., max_length=100)
@@ -15,17 +15,13 @@ class BookCreate(BaseModel):
     shelf: str = Field(..., max_length=100)
 
 
-class BookUpdate(BaseModel):
-    author: str
-    title: str
-    read_status: str
-    lib_address: str  # Из всплывающих окон
-    room: str
-    shelf: str
+class BookUpdate(BookCreate):
+    pass
 
 
 class BookOut(BaseModel):
     """Схема для возврата книги"""
+
     id: int
     author: str
     title: str
