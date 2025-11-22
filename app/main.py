@@ -70,9 +70,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Flash messages
 app.add_middleware(
-    SessionMiddleware,
-    secret_key=settings.SECRET_KEY,
-    max_age=7 * 24 * 3600  # 7 дней
+    SessionMiddleware, secret_key=settings.SECRET_KEY, max_age=7 * 24 * 3600  # 7 дней
 )
 
 # ✅ Добавляем SlowAPI middleware
@@ -100,8 +98,8 @@ async def read_root(request: Request, current_user: CurrentUser):
             "request": request,
             "title": "Главная страница",
             "user": current_user,
-            "messages": get_flashed_messages(request)
-        }
+            "messages": get_flashed_messages(request),
+        },
     )
 
 

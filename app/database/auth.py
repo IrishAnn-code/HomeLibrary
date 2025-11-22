@@ -15,9 +15,9 @@ security = HTTPBearer(auto_error=False)
 
 
 async def get_token_from_request(
-        request: Request,
-        credentials: HTTPAuthorizationCredentials | None = Depends(security)
-        ) -> str | None:
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+) -> str | None:
     """
     Извлечь JWT токен из запроса.
 
@@ -28,7 +28,9 @@ async def get_token_from_request(
 
     # 1. Пробуем Authorization header
     if credentials:
-        logger.debug(f"Token from Authorization header: {credentials.credentials[:20]}...")
+        logger.debug(
+            f"Token from Authorization header: {credentials.credentials[:20]}..."
+        )
         return credentials.credentials
 
     # 2. Пробуем cookie
@@ -58,7 +60,7 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"}
+            headers={"WWW-Authenticate": "Bearer"},
         )
     try:
         data = decode_access_token(token)
@@ -75,21 +77,21 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired",
-            headers={"WWW-Authenticate": "Bearer"}
+            headers={"WWW-Authenticate": "Bearer"},
         )
     except JWTError as e:
         logger.error(f"❌ JWT error: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"}
+            headers={"WWW-Authenticate": "Bearer"},
         )
     except (ValueError, TypeError) as e:
         logger.error(f"❌ Token format error: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid token format",
-            headers={"WWW-Authenticate": "Bearer"}
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
     result = await db.execute(select(User).where(User.id == user_id))
@@ -100,16 +102,16 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
-            headers={"WWW-Authenticate": "Bearer"}
+            headers={"WWW-Authenticate": "Bearer"},
         )
     logger.info(f"✅ User authenticated: {user.id} - {user.username}")
     return user
 
 
 async def get_current_user_optional(
-        request: Request,
-        db: AsyncSession = Depends(get_db),
-        token: str | None = Depends(get_token_from_request),
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    token: str | None = Depends(get_token_from_request),
 ) -> User | None:
     """
     Получить текущего пользователя (опционально).

@@ -24,33 +24,24 @@ class User(Base):
     updated_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc)
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Связи:
     # 1. Пользователь может быть участником нескольких библиотек
     libraries_assoc = relationship(
-        "UserLibrary",
-        back_populates="user",
-        cascade="all, delete-orphan"
+        "UserLibrary", back_populates="user", cascade="all, delete-orphan"
     )
 
     # 2. Через таблицу user_library получаем все библиотеки, где участвует
     libraries = relationship(
-        "Library",
-        secondary="user_library",
-        back_populates="users",
-        viewonly=True
+        "Library", secondary="user_library", back_populates="users", viewonly=True
     )
 
     # 3. Пользователь может быть владельцем библиотек
     owned_libraries = relationship(
-        "Library",
-        back_populates="owner",
-        foreign_keys='Library.owner_id'
+        "Library", back_populates="owner", foreign_keys="Library.owner_id"
     )
 
     # 4. Получаем все книги, которые добавил пользователь
-    books = relationship(
-        "Book", back_populates="user"
-    )  # , cascade="all, delete"
+    books = relationship("Book", back_populates="user")  # , cascade="all, delete"

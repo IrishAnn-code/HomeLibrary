@@ -11,7 +11,7 @@ class ReadStatus(str, Enum):
         names = {
             ReadStatus.NOT_READ: "Не прочитано",
             ReadStatus.READING: "Читаю",
-            ReadStatus.READ: "Прочитано"
+            ReadStatus.READ: "Прочитано",
         }
         return names[self]
 
@@ -46,7 +46,6 @@ class GenreStatus(str, Enum):
             GenreStatus.ADVENTURE: "приключения",
             GenreStatus.NOVEL: "роман",
             GenreStatus.FANTASY: "фэнтези",
-            GenreStatus.OTHER: "другое"
+            GenreStatus.OTHER: "другое",
         }
         return names[self]
-

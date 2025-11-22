@@ -25,10 +25,7 @@ async def get_all_users(db: AsyncSession, skip: int = 0, limit: int = 100):
         list[User]: Список пользователей
     """
     result = await db.scalars(
-        select(User)
-        .offset(skip)
-        .limit(limit)
-        .order_by(User.created_at.desc())
+        select(User).offset(skip).limit(limit).order_by(User.created_at.desc())
     )
     return result.all()
 
@@ -87,10 +84,12 @@ async def create_user(db: AsyncSession, username: str, email: str, password: str
             logger.warning(f"⚠️ Attempt to create duplicate user: {username} / {email}")
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="User with this username or email already exists"
+                detail="User with this username or email already exists",
             )
 
-        user = User(username=username, email=email, password_hash=hash_password(password))
+        user = User(
+            username=username, email=email, password_hash=hash_password(password)
+        )
         db.add(user)
         await db.commit()
         await db.refresh(user)
@@ -106,7 +105,7 @@ async def create_user(db: AsyncSession, username: str, email: str, password: str
         logger.error(f"❌ IntegrityError creating user {username}: {e}")
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="User with this username or email already exists"
+            detail="User with this username or email already exists",
         )
 
     except Exception as e:
@@ -114,11 +113,13 @@ async def create_user(db: AsyncSession, username: str, email: str, password: str
         logger.error(f"❌ Unexpected error creating user {username}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create user"
+            detail="Failed to create user",
         )
 
 
-async def authenticate_user(db: AsyncSession, username: str, password: str) -> User | None:
+async def authenticate_user(
+    db: AsyncSession, username: str, password: str
+) -> User | None:
     """
     Проверить учетные данные пользователя.
     Args:
@@ -143,7 +144,9 @@ async def authenticate_user(db: AsyncSession, username: str, password: str) -> U
     return user
 
 
-async def get_user_books(db: AsyncSession, user_id: int, skip: int = 0, limit: int = 100):
+async def get_user_books(
+    db: AsyncSession, user_id: int, skip: int = 0, limit: int = 100
+):
     """
     Получить все книги пользователя с пагинацией.
     Args:
@@ -157,12 +160,11 @@ async def get_user_books(db: AsyncSession, user_id: int, skip: int = 0, limit: i
 
     Raises:
         HTTPException 404: Пользователь не найден
-       """
+    """
     user = await db.get(User, user_id)
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User {user_id} not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"User {user_id} not found"
         )
 
     books = await db.scalars(
@@ -176,7 +178,9 @@ async def get_user_books(db: AsyncSession, user_id: int, skip: int = 0, limit: i
     return books.all()
 
 
-async def update_user(db: AsyncSession, user_id: int, password: str, user_update: UserUpdate):
+async def update_user(
+    db: AsyncSession, user_id: int, password: str, user_update: UserUpdate
+):
     """
     Обновить данные пользователя.
 
@@ -200,13 +204,13 @@ async def update_user(db: AsyncSession, user_id: int, password: str, user_update
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User {user_id} not found"
+                detail=f"User {user_id} not found",
             )
         if not verify_password(password, user.password_hash):
             logger.warning(f"Invalid current password for user {user_id}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid current password"
+                detail="Invalid current password",
             )
         data = {}
         if user_update.firstname is not None:
@@ -214,7 +218,7 @@ async def update_user(db: AsyncSession, user_id: int, password: str, user_update
         if user_update.lastname is not None:
             data["lastname"] = user_update.lastname
         if user_update.email is not None:
-            data['email'] = user_update.email
+            data["email"] = user_update.email
         if user_update.password is not None:
             data["password_hash"] = hash_password(user_update.password)
 
@@ -233,8 +237,7 @@ async def update_user(db: AsyncSession, user_id: int, password: str, user_update
         await db.rollback()
         logger.error(f"❌ IntegrityError updating user {user_id}: {e}")
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Email already exists"
+            status_code=status.HTTP_409_CONFLICT, detail="Email already exists"
         )
 
     except Exception as e:
@@ -242,7 +245,7 @@ async def update_user(db: AsyncSession, user_id: int, password: str, user_update
         logger.error(f"❌ Error updating user {user_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update user"
+            detail="Failed to update user",
         )
 
 
@@ -266,7 +269,7 @@ async def delete_user(db: AsyncSession, user_id: int):
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User {user_id} not found"
+                detail=f"User {user_id} not found",
             )
         await db.delete(user)
         await db.commit()
@@ -281,5 +284,5 @@ async def delete_user(db: AsyncSession, user_id: int):
         logger.error(f"❌ Error deleting user {user_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete user"
+            detail="Failed to delete user",
         )

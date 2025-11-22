@@ -21,21 +21,21 @@ class Book(Base):
     read_status = Column(SQLEnum(ReadStatus), default=ReadStatus.NOT_READ)
 
     lib_address = Column(String)  # institut.13
-    room = Column(String)  #  saloon
-    shelf = Column(String)  # 3rd shelf
+    room = Column(String, nullable=True)  #  saloon
+    shelf = Column(String, nullable=True)  # 3rd shelf
 
     slug = Column(String, unique=True, index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
     updated_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc)
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     library_id = Column(Integer, ForeignKey("library.id"), index=True)
     user_id = Column(Integer, ForeignKey("user.id"), index=True)
 
     # 🔗 связь обратно с Library
-    library = relationship("Library", back_populates="books", overlaps="users")
+    library = relationship("Library", back_populates="books")
     # 🔗 связь обратно с User
-    user = relationship("User", back_populates="books", overlaps="libraries")
+    user = relationship("User", back_populates="books")
