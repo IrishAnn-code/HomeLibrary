@@ -3,37 +3,28 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>{{ title or "Library" }}</title>
+  <title>{{ title or "Home Library" }}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
 <style>
-* {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
     html, body {
-        height: 100%;
+      height: 100%;
     }
 
     body {
-        display: flex;
-        flex-direction: column;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
 
-    .main-content {
-        flex: 1;
-        position: relative;
-
+    .container-main {
+      flex: 1 0 auto;
     }
 
     footer {
-        position: absolute;
-        bottom: 0;
-        width: 100%;
+      flex-shrink: 0;
     }
-</style>
+  </style>
 </head>
 
 <body class="p-3 mb-2 bg-dark text-light">
@@ -56,7 +47,7 @@
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
               <li><a class="dropdown-item" href="/user/me">Мой профиль</a></li>
-              <li><a class="dropdown-item" href="/user/book/me">Мои книги</a></li>
+              <li><a class="dropdown-item" href="/book/my">Мои книги</a></li>
               {% if user.is_admin %}
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item" href="/admin/users">👑 Управление пользователями</a></li>
@@ -92,9 +83,22 @@
 
 
  <!-- Footer -->
-  <footer class="bg-success mt-5 py-3">
-    <div class="container text-center text-muted">
-      <small>&copy; 2025 Home Library. Made with ❤️</small>
+<footer class="bg-success mt-auto py-3">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-6 text-center text-md-start">
+          <small class="text-muted">
+            &copy; 2024 Home Library. Made with ❤️ by IrishAnn
+          </small>
+        </div>
+        <div class="col-md-6 text-center text-md-end">
+          <small class="text-muted">
+            <a  href="https://github.com/IrishAnn-code/HomeLibrary" style="color:#ece9f0;" class="text-decoration-none">
+              GitHub
+            </a>
+          </small>
+        </div>
+      </div>
     </div>
   </footer>
 
