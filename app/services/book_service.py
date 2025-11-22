@@ -1,6 +1,4 @@
-from http.client import HTTPException
-
-from fastapi import Query
+from fastapi import Query, HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, update, func
@@ -148,3 +146,22 @@ async def delete_book(db: AsyncSession, book_id: int):
     await db.delete(book)
     await db.commit()
     return True
+
+
+async def get_popular_authors(db: AsyncSession, limit: int = 50):
+    """
+    Получаем список авторов из существующих книг
+    :return: list[dict]: [{"author": "Leo Tolstoy", "count": 5}, ...]
+    """
+    result = await db.execute(
+        select(Book.author, func.count(Book.id).label("count"))
+        .where(Book.author.isnot(None))
+        .group_by(Book.author)
+        .order_by(func.count(Book.id).desc())
+        .limit(limit)
+    )
+
+    authors = []
+    for row in result:
+        authors.append({"author": row.author, "count": row.count})
+    return authors

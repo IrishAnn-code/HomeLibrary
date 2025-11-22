@@ -18,7 +18,7 @@ from app.services.book_service import (
     delete_book,
     update_book,
     get_popular_genres,
-    get_username_by_book,
+    get_username_by_book, get_popular_authors,
 )
 from app.services.library_service import list_user_libraries
 from app.services.user_service import get_user_books
@@ -71,6 +71,7 @@ async def create_book_page(request: Request, db: DBType, current_user: CurrentUs
     """Страница добавления книги"""
     libraries = await list_user_libraries(db, current_user.id)
     popular_genres = await get_popular_genres(db)
+    popular_authors = await get_popular_authors(db)
 
     return templates.TemplateResponse(
         "books/create.html",
@@ -78,6 +79,7 @@ async def create_book_page(request: Request, db: DBType, current_user: CurrentUs
             "request": request,
             "libraries": libraries,
             "popular_genres": popular_genres,
+            "popular_authors": popular_authors,
             "user": current_user,
         },
     )
@@ -128,8 +130,7 @@ async def create_book_submit(
                 "request": request,
                 "error": str(e),
                 "libraries": libraries,
-                "user": current_user,
-                "genres": list(GenreStatus),
+                "user": current_user
             },
         )
 
@@ -198,6 +199,7 @@ async def edit_book_page(
     # Получаем библиотеки пользователя
     libraries = await list_user_libraries(db, current_user.id)
     popular_genres = await get_popular_genres(db)
+    popular_authors = await get_popular_authors(db)
 
     return templates.TemplateResponse(
         "books/edit.html",
@@ -206,6 +208,7 @@ async def edit_book_page(
             "book": book,
             "libraries": libraries,
             "popular_genres": popular_genres,
+            "popular_authors": popular_authors,
             "user": current_user,
         },
     )
@@ -223,7 +226,6 @@ async def edit_book_submit(
     genre: str = Form(None),
     color: str = Form(None),
     read_status: str = Form(...),
-    library_id: int = Form(...),
     lib_address: str = Form(None),
     room: str = Form(None),
     shelf: str = Form(None),
