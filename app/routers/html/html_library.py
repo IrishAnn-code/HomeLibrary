@@ -1,3 +1,4 @@
+from http.client import HTTPException
 from typing import Annotated
 from fastapi import APIRouter, Request, Depends, Form
 from fastapi.templating import Jinja2Templates
@@ -33,8 +34,8 @@ async def libraries_list(request: Request, db: DBType, current_user: CurrentUser
             "libraries": libraries,
             "user": current_user,
             "title": "Мои библиотеки",
-            "messages": get_flashed_messages(request)
-        }
+            "messages": get_flashed_messages(request),
+        },
     )
 
 
@@ -42,8 +43,7 @@ async def libraries_list(request: Request, db: DBType, current_user: CurrentUser
 async def create_library_page(request: Request, current_user: CurrentUser):
     """Страница создания библиотеки"""
     return templates.TemplateResponse(
-        "libraries/create.html",
-        {"request": request, "user": current_user}
+        "libraries/create.html", {"request": request, "user": current_user}
     )
 
 
@@ -53,48 +53,62 @@ async def create_library_submit(
     db: DBType,
     current_user: CurrentUser,
     name: str = Form(...),
-    password: str | None = Form(None)
+    password: str | None = Form(None),
 ):
     """Обработка создания библиотеки"""
     try:
         await library_service.create_library(db, name, password, current_user.id)
-        flash(request, f"Библиотека для {current_user.username} успешно создана!", "success")
+        flash(
+            request,
+            f"Библиотека для {current_user.username} успешно создана!",
+            "success",
+        )
         return RedirectResponse(url="/library/", status_code=303)
     except Exception as e:
         return templates.TemplateResponse(
             "libraries/create.html",
-            {"request": request, "error": str(e), "user": current_user}
+            {"request": request, "error": str(e), "user": current_user},
         )
 
 
-@router.get("/{library_id}", response_class=HTMLResponse)
-async def library_detail(
-        request: Request,
-        db: DBType,
-        library_id: int,
-        current_user: CurrentUser
+@router.get("/search", response_class=HTMLResponse)
+async def search_libraries(
+    request: Request, db: DBType, current_user: CurrentUser, q: str = ""
 ):
-    """Страница библиотеки с книгами"""
-    library = await library_service.get_library(db, library_id)
-    books = await library_service.all_books_in_lib(db, library_id)
-
+    """Поиск библиотек для присоединения"""
+    logger.info(f"🎯 START SEARCH: query='{q}'")
+    libraries = await library_service.list_of_libs_to_join(db, current_user.id, q)
     return templates.TemplateResponse(
-        "libraries/detail.html",
-        {
-            "request": request,
-            "library": library,
-            "books": books,
-            "user": current_user
-        }
+        "libraries/search.html",
+        {"request": request, "libraries": libraries, "query": q, "user": current_user},
     )
+
 
 @router.get("/{library_id}/join", response_class=HTMLResponse)
-async def join_library_page(request: Request, library_id: int, current_user: CurrentUser):
+async def join_library_page(
+    request: Request, db: DBType, library_id: int, current_user: CurrentUser
+):
     """Страница присоединения к библиотеке"""
+    library = await library_service.get_library(db, library_id)
+    logger.info(
+        f"🔍22222 Checking membership: user_id={current_user.id}, library_id={library_id}"
+    )
+
+    if not library:
+        flash(request, "Библиотека не найдена", "error")
+        return RedirectResponse(url="/library/search", status_code=303)
+
+    is_member = await library_service.is_library_member(db, current_user.id, library_id)
+
+    if is_member:
+        flash(request, "Вы уже состоите в этой библиотеке", "info")
+        return RedirectResponse(url=f"/library/", status_code=303)
+
     return templates.TemplateResponse(
         "libraries/join.html",
-        {"request": request, "library_id": library_id, "user": current_user}
+        {"request": request, "library": library, "user": current_user},
     )
+
 
 @router.post("/{library_id}/join")
 async def join_library_submit(
@@ -102,14 +116,39 @@ async def join_library_submit(
     db: DBType,
     library_id: int,
     current_user: CurrentUser,
-    password: str | None = Form(None)
+    password: str | None = Form(None),
 ):
     """Присоединиться к библиотеке"""
     try:
-        await library_service.join_library(db, library_id, password, current_user.id)
-        return RedirectResponse(url=f"/library/{library_id}", status_code=303)
-    except Exception as e:
-        return templates.TemplateResponse(
-            "libraries/join.html",
-            {"request": request, "error": str(e), "user": current_user}
+        library = await library_service.join_library(
+            db, library_id, password, current_user.id
         )
+        flash(request, f"Вы присоединились к библиотеке '{library.name}'", "success")
+        return RedirectResponse(url=f"/library/", status_code=303)
+    except HTTPException as e:
+        flash(request, f"{e}", "error")
+        return RedirectResponse(url=f"/library/{library_id}/join", status_code=303)
+
+
+@router.get("/{library_id}", response_class=HTMLResponse)
+async def library_detail(
+    request: Request, db: DBType, library_id: int, current_user: CurrentUser
+):
+    """Страница библиотеки с книгами"""
+    is_member = await library_service.is_library_member(db, current_user.id, library_id)
+    if is_member:
+        library = await library_service.get_library(db, library_id)
+        books = await library_service.all_books_in_lib(db, library_id)
+
+        return templates.TemplateResponse(
+            "libraries/detail.html",
+            {
+                "request": request,
+                "library": library,
+                "books": books,
+                "user": current_user,
+            },
+        )
+    else:
+        flash(request, "Вы не участник этой библиотеки", "error")
+        return RedirectResponse(url="/library", status_code=303)

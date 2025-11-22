@@ -1,10 +1,41 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block crud_container %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title text-center text-dark">Присоединиться к библиотеке</h3>
+        <h5 class="text-center text-uppercase text-decoration-underline text-dark">{{ library.name }}</h5>
+
+        {% if library.password_hash %}
+          <div class="alert alert-warning">
+            🔒 Эта библиотека защищена паролем
+          </div>
+
+          <form action="/library/{{ library.id }}/join" method="post">
+            <div class="mb-3">
+              <label class="form-label text-dark">Пароль</label>
+              <input type="password" name="password" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-success w-100">
+              Присоединиться
+            </button>
+          </form>
+        {% else %}
+          <p class="text-center text-dark">🌐 Открытая библиотека. <br> Нажмите кнопку для присоединения.</p>
+          <form action="/library/{{ library.id }}/join" method="post">
+            <button type="submit" class="btn btn-success w-100">
+              Присоединиться
+            </button>
+          </form>
+        {% endif %}
+
+        <div class="text-center mt-3">
+          <a href="/library/search">Назад к поиску</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

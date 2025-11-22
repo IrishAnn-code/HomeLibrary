@@ -10,6 +10,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 async def get_libraries(db: AsyncSession):
     """Список всех библиотек"""
     libraries = await db.scalars(select(Library))
@@ -33,6 +34,17 @@ async def list_user_libraries(db: AsyncSession, user_id: int):
         select(Library).join(UserLibrary).where(UserLibrary.user_id == user_id)
     )
     return result.scalars().all()
+
+
+async def is_library_member(db: AsyncSession, user_id: int, library_id: int):
+    """Является ли пользователь участником библиотеки"""
+    logger.info(f"🔍 Checking membership: user_id={user_id}, library_id={library_id}")
+    is_member = await db.scalar(
+        select(UserLibrary).where(
+            (UserLibrary.user_id == user_id) & (UserLibrary.library_id == library_id)
+        )
+    )
+    return is_member
 
 
 async def all_books_in_lib(db: AsyncSession, lib_id: int):
@@ -63,14 +75,16 @@ async def create_library(
 
         lib = Library(name=name, password_hash=hashed, slug=slug, owner_id=owner_id)
         db.add(lib)
-        await db.flush() # Получаем lib.id без commit
+        await db.flush()  # Получаем lib.id без commit
 
         # Добавляем владельца как участника
         membership = UserLibrary(user_id=owner_id, library_id=lib.id, role="owner")
         db.add(membership)
         await db.commit()
         await db.refresh(lib)
-        logger.info(f'✅ Библиотека с названием {name} для пользователя {owner_id} успешно создана!')
+        logger.info(
+            f"✅ Библиотека с названием {name} для пользователя {owner_id} успешно создана!"
+        )
         return lib
     except Exception as e:
         await db.rollback()
@@ -78,7 +92,7 @@ async def create_library(
 
 
 async def join_library(
-    db: AsyncSession, lib_id_or_name: str, password: str, user_id: int
+    db: AsyncSession, lib_id_or_name: str | int, password: str, user_id: int
 ):
     """Присоединиться к библиотеке по имени или id"""
     lib = None
@@ -123,3 +137,23 @@ async def update_name(db: AsyncSession, new_name: str, lib_id: int, user_id: int
     await db.execute(update(Library).where(Library.id == lib_id).values(name=new_name))
     await db.commit()
     return True
+
+
+async def list_of_libs_to_join(db: AsyncSession, user_id: int, query: str = ""):
+    """
+    Список библиотек для присоединения, которые не принадлежат пользователю
+    """
+    if query:
+        my_lib_ids = [lib.id for lib in await list_user_libraries(db, user_id)]
+        search_query = f"%{query}%"
+
+        result = await db.execute(
+            select(Library)
+            .where(Library.name.ilike(search_query))
+            .where(Library.id.notin_(my_lib_ids))
+            .order_by(Library.name)
+        )
+        logger.info(f"ASDFGHJKL:{result}")
+        return result.scalars().all()
+    else:
+        return []
