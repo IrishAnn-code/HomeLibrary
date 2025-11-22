@@ -17,6 +17,8 @@ from app.services.book_service import (
     create_book,
     delete_book,
     update_book,
+    get_popular_genres,
+    get_username_by_book,
 )
 from app.services.library_service import list_user_libraries
 from app.services.user_service import get_user_books
@@ -30,22 +32,23 @@ logger = logging.getLogger(__name__)
 DBType = Annotated[AsyncSession, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
+
 @router.get("/", response_class=HTMLResponse)
 async def books_list(
     request: Request,
     db: DBType,
     current_user: CurrentUser,
     skip: int = 0,
-    limit: int = 50
+    limit: int = 50,
 ):
     """Список всех книг"""
     books = await get_all_books(db, skip, limit)
     return templates.TemplateResponse(
-        "books/list.html",
-        {"request": request, "books": books, "user": current_user}
+        "books/list.html", {"request": request, "books": books, "user": current_user}
     )
 
-@router.get("/", response_class=HTMLResponse)  #admin
+
+@router.get("/", response_class=HTMLResponse)  # admin
 async def all_books_page(request: Request, db: DBType):
     books = await get_all_books(db)
     return templates.TemplateResponse(
@@ -59,7 +62,7 @@ async def my_books(request: Request, db: DBType, current_user: CurrentUser):
     books = await get_user_books(db, current_user.id)
     return templates.TemplateResponse(
         "books/user_books.html",
-        {"request": request, "books": books, "user": current_user}
+        {"request": request, "books": books, "user": current_user},
     )
 
 
@@ -67,9 +70,16 @@ async def my_books(request: Request, db: DBType, current_user: CurrentUser):
 async def create_book_page(request: Request, db: DBType, current_user: CurrentUser):
     """Страница добавления книги"""
     libraries = await list_user_libraries(db, current_user.id)
+    popular_genres = await get_popular_genres(db)
+
     return templates.TemplateResponse(
         "books/create.html",
-        {"request": request, "libraries": libraries, "user": current_user, "genres": list(GenreStatus)}
+        {
+            "request": request,
+            "libraries": libraries,
+            "popular_genres": popular_genres,
+            "user": current_user,
+        },
     )
 
 
@@ -86,13 +96,15 @@ async def create_book_submit(
     read_status: str = Form(...),
     room: str = Form(None),
     shelf: str = Form(None),
-    library_id: int = Form(...)
+    library_id: int = Form(...),
 ):
     """Обработка добавления книги"""
+    logger.info(f" ✅1 Жанр получен {genre}")
     try:
+        logger.info(f" ✅2 Жанр получен {genre}")
         library = await db.get(Library, library_id)
         if not library:
-            raise HTTPException(status_code=404, detail="Библиотека не найдена" )
+            raise HTTPException(status_code=404, detail="Библиотека не найдена")
         book_data = BookCreate(
             author=author.title(),
             title=title.capitalize(),
@@ -102,7 +114,7 @@ async def create_book_submit(
             read_status=read_status,
             lib_address=library.name,
             room=room.capitalize(),
-            shelf=shelf.capitalize()
+            shelf=shelf.capitalize(),
         )
         book = await create_book(db, book_data, current_user.id, library_id)
         flash(request, "Книга успешно добавлена", "success")
@@ -112,33 +124,23 @@ async def create_book_submit(
         libraries = await list_user_libraries(db, current_user.id)
         return templates.TemplateResponse(
             "books/create.html",
-            {"request": request, "error": str(e), "libraries": libraries, "user": current_user, "genres": list(GenreStatus)})
-
-
-@router.put("/update", response_class=HTMLResponse)
-async def edit_task(
-    request: Request, db: DBType, user_id: int, task_id: int, update_b: BookUpdate
-):
-    book = await update_book(db, user_id, task_id, update_b)
-    if not book:
-        return templates.TemplateResponse("errors/404.html", {"request": request})
-    return templates.TemplateResponse(
-        "books/edit.html", {"request": request, "book": book}
-    )
+            {
+                "request": request,
+                "error": str(e),
+                "libraries": libraries,
+                "user": current_user,
+                "genres": list(GenreStatus),
+            },
+        )
 
 
 @router.get("/search", response_class=HTMLResponse)
-async def search_books(
-        request: Request,
-        db: DBType,
-        q: str,
-        current_user: CurrentUser
-):
+async def search_books(request: Request, db: DBType, q: str, current_user: CurrentUser):
     """Поиск книг"""
     books = await search_books(db, q)
     return templates.TemplateResponse(
         "books/search_results.html",
-        {"request": request, "books": books, "query": q, "user": current_user}
+        {"request": request, "books": books, "query": q, "user": current_user},
     )
 
 
@@ -155,27 +157,118 @@ async def delete_index(request: Request):
     )
 
 
-@router.post("/delete/{book_id}", response_class=HTMLResponse)
-async def delete_page(request: Request, db: DBType, book_id: int):
-    task = await delete_book(db, book_id)
-    if not task:
-        return templates.TemplateResponse("errors/404.html", {"request": request})
-    return templates.TemplateResponse("books/delete_id.html", {"request": request})
+@router.post("/{book_id}/delete", response_class=HTMLResponse)
+async def delete_page(
+    request: Request, db: DBType, book_id: int, current_user: CurrentUser
+):
+    """Удалить книгу"""
+    book = await get_book_by_id(db, book_id)
+
+    if not book:
+        flash(request, "Книга не найдена", "error")
+        return RedirectResponse(url="/book", status_code=303)
+
+    # Проверка прав (только владелец или админ)
+    # if book.user_id != current_user.id and not current_user.is_admin:
+    if book.user_id != current_user.id:
+        flash(request, "У вас нет прав на удаление этой книги", "error")
+        return RedirectResponse(url=f"/book/{book_id}", status_code=303)
+
+    await delete_book(db, book_id)
+
+    flash(request, f"Книга '{book.title}' удалена", "success")
+    return RedirectResponse(url="/book", status_code=303)
+
+
+@router.get("/{book_id}/edit", response_class=HTMLResponse)
+async def edit_book_page(
+    request: Request, db: DBType, book_id: int, current_user: CurrentUser
+):
+    """Страница редактирования книги"""
+    book = await get_book_by_id(db, book_id)
+
+    if not book:
+        flash(request, "Книга не найдена", "error")
+        return RedirectResponse(url="/book/", status_code=303)
+
+    if book.user_id != current_user.id:
+        flash(request, "У вас недостаточно прав на редактирование этой книги", "error")
+        return RedirectResponse(url=f"/book/{book_id}", status_code=303)
+
+    # Получаем библиотеки пользователя
+    libraries = await list_user_libraries(db, current_user.id)
+    popular_genres = await get_popular_genres(db)
+
+    return templates.TemplateResponse(
+        "books/edit.html",
+        {
+            "request": request,
+            "book": book,
+            "libraries": libraries,
+            "popular_genres": popular_genres,
+            "user": current_user,
+        },
+    )
+
+
+@router.post("/{book_id}/edit")
+async def edit_book_submit(
+    request: Request,
+    db: DBType,
+    book_id: int,
+    current_user: CurrentUser,
+    author: str = Form(...),
+    title: str = Form(...),
+    description: str = Form(None),
+    genre: str = Form(None),
+    color: str = Form(None),
+    read_status: str = Form(...),
+    library_id: int = Form(...),
+    lib_address: str = Form(None),
+    room: str = Form(None),
+    shelf: str = Form(None),
+):
+    """Обработка редактирования книги"""
+    try:
+        book = await get_book_by_id(db, book_id)
+
+        if not book or book.user_id != current_user.id:
+            flash(request, "Книга не найдена или нет прав", "error")
+            return RedirectResponse(url="/book/", status_code=303)
+
+        logger.info(f" ✅ {genre}")
+        update_data = BookUpdate(
+            author=author,
+            title=title,
+            description=description,
+            genre=genre,
+            color=color,
+            read_status=read_status,
+            lib_address=lib_address,
+            room=room,
+            shelf=shelf,
+        )
+        logger.info(f" ✅ {update_data}")
+        await update_book(db, current_user.id, book_id, update_data)
+        flash(request, f"Книга '{title}' обновлена!", "success")
+        return RedirectResponse(url=f"/book/{book_id}", status_code=303)
+
+    except Exception as e:
+        logger.error(f"Error updating book: {e}")
+        flash(request, f"Ошибка обновления: {str(e)}", "error")
+        return RedirectResponse(url=f"/books/{book_id}/edit", status_code=303)
 
 
 @router.get("/{book_id}", response_class=HTMLResponse)
 async def book_detail(
-        request: Request,
-        db: DBType,
-        book_id: int,
-        current_user: CurrentUser
+    request: Request, db: DBType, book_id: int, current_user: CurrentUser
 ):
     """Страница книги"""
     book = await get_book_by_id(db, book_id)
     if not book:
         return templates.TemplateResponse("errors/404.html", {"request": request})
-
+    user = await get_username_by_book(db, book_id)
     return templates.TemplateResponse(
         "books/info.html",
-        {"request": request, "book": book, "user": current_user}
+        {"request": request, "book": book, "user": user, "current_user": current_user},
     )
