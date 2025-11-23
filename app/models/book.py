@@ -18,7 +18,6 @@ class Book(Base):
     description = Column(String, nullable=True)
     genre = Column(String, nullable=True)
     color = Column(String, nullable=True)
-    read_status = Column(SQLEnum(ReadStatus), default=ReadStatus.NOT_READ)
 
     lib_address = Column(String)  # institut.13
     room = Column(String, nullable=True)  #  saloon
@@ -35,7 +34,7 @@ class Book(Base):
     library_id = Column(Integer, ForeignKey("library.id"), index=True)
     user_id = Column(Integer, ForeignKey("user.id"), index=True)
 
-    # 🔗 связь обратно с Library
+    # 🔗 связи
     library = relationship("Library", back_populates="books")
-    # 🔗 связь обратно с User
     user = relationship("User", back_populates="books")
+    user_statuses = relationship("UserBookStatus", back_populates="book", cascade="all, delete-orphan")

@@ -5,7 +5,9 @@ from fastapi import HTTPException, status
 import logging
 
 from app.models import Book, User
+from app.models.enum import ReadStatus
 from app.schemas.user import UserUpdate
+from app.services.book_status_service import get_user_book_status, add_read_status_to_book
 from app.utils.hashing import hash_password, verify_password
 
 
@@ -148,7 +150,7 @@ async def get_user_books(
     db: AsyncSession, user_id: int, skip: int = 0, limit: int = 100
 ):
     """
-    Получить все книги пользователя с пагинацией.
+    Получить все книги добавленные пользователем с пагинацией.
     Args:
         db: Сессия базы данных
         user_id: ID пользователя
@@ -176,6 +178,13 @@ async def get_user_books(
     )
 
     return books.all()
+
+
+async def get_user_books_with_status(db: AsyncSession, user_id: int):
+    """Получить книги добавленные пользователем со статусами чтения"""
+    books = await get_user_books(db, user_id)
+    books_with_status = await add_read_status_to_book(db, user_id, books)
+    return books_with_status
 
 
 async def update_user(

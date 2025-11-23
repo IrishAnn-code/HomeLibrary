@@ -2,7 +2,7 @@
 {% block crud_container %}
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h2>Книги добавленные мной:</h2>
+  <h2>Мои книги</h2>
   <a href="/book/create" class="btn btn-success">➕ Добавить книгу</a>
 </div>
 
@@ -16,19 +16,19 @@
           <th>Статус</th>
           <th>Адрес</th>
           </tr>
-          {% for book in books %}
+          {% for item in books_with_status %}
           <tr>
-            <td>{{ book.author }}</td>
-            <td><a href="/book/{{ book.id }}">{{ book.title }}</a></td>
-            <td>{{ book.genre }}</td>
-            <td>{{ book.description }}</td>
+            <td>{{ item.book.author }}</td>
+            <td><a href="/book/{{ item.book.id }}">{{ item.book.title }}</a></td>
+            <td>{{ item.book.genre }}</td>
+            <td>{{ item.book.description }}</td>
             <td>
             <p class="card-text text-dark">
-              <span class="badge bg-{{ 'success' if book.read_status == 'read' else 'warning' if book.read_status == 'reading' else 'secondary' }}">
-                {{ book.read_status.russian_name }}</span>
+              <span class="badge bg-{{ 'success' if item.read_status == 'read' else 'warning' if item.read_status == 'reading' else 'secondary' }}">
+                {{ item.read_status.russian_name }}</span>
             </p>
             </td>
-            <td>{{ book.lib_address }}</td>
+            <td>{{ item.book.lib_address }}</td>
           </tr>
           {% else %}
           <tr><td colspan="6">Нет книг</td></tr>

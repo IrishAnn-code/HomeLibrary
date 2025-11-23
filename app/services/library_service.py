@@ -1,12 +1,12 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete, update
+from sqlalchemy import select, update
+import logging
 
-from app.core.exceptions import not_found, authorization_error, bad_request
-from app.models import Book, User, Library, UserLibrary
+from app.models import Book, Library, UserLibrary
+from app.services.book_status_service import add_read_status_to_book
 from app.utils.hashing import hash_password, verify_password
 from app.utils.helpers import make_slug
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -48,9 +48,24 @@ async def is_library_member(db: AsyncSession, user_id: int, library_id: int):
 
 
 async def all_books_in_lib(db: AsyncSession, lib_id: int):
-    """Все книги в одной библиотеке"""
+    """
+    Все книги в одной библиотеке
+    db: База данных
+    lib_id: id библиотеки
+    user_id: необязательный аргумент, введен, чтобы другие функции не падали
+
+    return: Список книг
+    """
     books = await db.scalars(select(Book).where(Book.library_id == lib_id))
     return books.all()
+
+
+async def get_library_books_with_status(db: AsyncSession, lib_id: int, user_id: int):
+    """Получить книги в библиотеке со статусами чтения для текущего пользователя"""
+    books = await all_books_in_lib(db, lib_id)
+    books_with_status = await add_read_status_to_book(db, user_id, books)
+    logger.info(f'🔍 {books_with_status}')
+    return books_with_status
 
 
 async def books_in_address(db: AsyncSession, lib_id: int, lib_address: str):
@@ -100,13 +115,20 @@ async def join_library(
         isinstance(lib_id_or_name, str) and str(lib_id_or_name).isdigit()
     ):
         lib = await db.get(Library, int(lib_id_or_name))
+
     if not lib:
         lib = await db.scalar(select(Library).where(Library.name == lib_id_or_name))
+
     if not lib:
-        not_found("Library not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Library not found")
+
     if lib.password_hash:
         if not verify_password(password, lib.password_hash):
-            authorization_error("Incorrect password")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect password")
     # Проверяем, не состоит ли уже пользователь
     existing = await db.scalar(
         select(UserLibrary).where(
@@ -133,7 +155,10 @@ async def update_name(db: AsyncSession, new_name: str, lib_id: int, user_id: int
         select(Library).where((Library.id == lib_id) & (Library.owner_id == user_id))
     )
     if not library:
-        bad_request("Library not found")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Library not found")
+
     await db.execute(update(Library).where(Library.id == lib_id).values(name=new_name))
     await db.commit()
     return True

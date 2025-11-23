@@ -1,11 +1,13 @@
-from fastapi import Query, HTTPException
+from fastapi import Query, HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete, update, func
+from sqlalchemy import select, update, func
 
-from app.core.exceptions import not_found, forbidden, conflict, server_error
 from app.models import Book, User, Library
 from app.schemas.book import BookCreate, BookUpdate
+from app.services.book_status_service import update_user_book_status, add_read_status_to_book
+from app.services.library_service import list_user_libraries, is_library_member
+from app.services.user_service import get_user_by_id
 from app.utils.helpers import make_slug, normalize_author_name
 import logging
 
@@ -43,19 +45,15 @@ async def create_book(
         # Проверяем, что библиотека существует
         library = await db.get(Library, library_id)
         if not library:
-            raise not_found('f"Library {library_id} not found"')
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='f"Library {library_id} not found"')
 
-        # Проверяем, что пользователь состоит в библиотеке
-        from app.models.user_library import UserLibrary
-
-        membership = await db.scalar(
-            select(UserLibrary).where(
-                (UserLibrary.user_id == user_id)
-                & (UserLibrary.library_id == library_id)
-            )
-        )
+        membership = await is_library_member(db, user_id, library_id)
         if not membership:
-            raise forbidden("You are not a member of this library")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not a member of this library")
 
         slug = make_slug(f"{data.author}-{data.title}", unique=True)
         book = Book(
@@ -64,7 +62,6 @@ async def create_book(
             description=data.description,
             genre=data.genre,
             color=data.color,
-            read_status=data.read_status,
             lib_address=data.lib_address,
             room=data.room,
             shelf=data.shelf,
@@ -76,17 +73,27 @@ async def create_book(
         await db.commit()
         await db.refresh(book)
         logger.info(f"✅ Book created: {book.id} - {book.title}")
+        logger.info(f"✅ Книга создана с ID: {book.id}")
+
+        await update_user_book_status(db, user_id, book.id, data.read_status)
+        logger.info(f"✅ Статус обновлен {data.read_status}")
         return book
+
     except HTTPException:
         raise
     except IntegrityError as e:
         await db.rollback()
         logger.error(f"❌ IntegrityError creating book: {e}")
-        raise conflict("Book with this slug already exists")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Book with this slug already exists")
     except Exception as e:
         await db.rollback()
         logger.error(f"❌ Error creating book: {e}")
-        raise server_error("Failed to create book")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create book"
+        )
 
 
 async def update_book(db: AsyncSession, user_id: int, book_id: int, data: BookUpdate):
@@ -109,12 +116,12 @@ async def update_book(db: AsyncSession, user_id: int, book_id: int, data: BookUp
             description=data.description,
             genre=data.genre,
             color=data.color,
-            read_status=data.read_status,
             lib_address=data.lib_address,
             room=data.room,
             shelf=data.shelf,
         )
     )
+    read_status = await update_user_book_status(db, user_id, book_id, data.read_status)
     await db.commit()
     return True
 
@@ -165,3 +172,47 @@ async def get_popular_authors(db: AsyncSession, limit: int = 50):
     for row in result:
         authors.append({"author": row.author, "count": row.count})
     return authors
+
+
+async def get_all_accessible_books(db: AsyncSession, user_id: int, skip: int = 0, limit: int = 100):
+    """
+    Получить все книги из всех библиотек, где состоит пользователь.
+    Включает как его собственные книги, так и книги других пользователей.
+
+    Args:
+        db: Сессия базы данных
+        user_id: ID пользователя
+        skip: Количество пропускаемых записей
+        limit: Максимальное количество возвращаемых записей
+
+    Returns:
+        list[Book]: Список всех доступных книг
+    """
+    user = await get_user_by_id(db, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Пользователь: {user_id} не был найден "
+        )
+
+    user_libraries = await list_user_libraries(db, user_id)
+    if not user_libraries:
+        return []
+
+    library_ids = [library.id for library in user_libraries]
+
+    books = await db.scalars(
+        select(Book)
+        .where(Book.library_id.in_(library_ids))
+        .offset(skip)
+        .limit(limit)
+        .order_by(Book.created_at.desc())
+    )
+    return books.all()
+
+
+async def get_all_accessible_book_with_status(db: AsyncSession, user_id: int, skip: int = 0, limit: int = 100):
+    """Все доступные пользователю книги со статусами"""
+    books = await get_all_accessible_books(db, user_id, skip, limit)
+    books_with_status = await add_read_status_to_book(db, user_id, books)
+    return books_with_status

@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.auth import get_current_user
 from app.database.db_depends import get_db
 from app.models import User, Library
-from app.models.enum import GenreStatus
+from app.models.enum import GenreStatus, ReadStatus
 from app.schemas.book import BookUpdate, BookCreate
 from app.services.book_service import (
     get_all_books,
@@ -18,10 +18,11 @@ from app.services.book_service import (
     delete_book,
     update_book,
     get_popular_genres,
-    get_username_by_book, get_popular_authors,
+    get_username_by_book, get_popular_authors, get_all_accessible_book_with_status,
 )
+from app.services.book_status_service import get_user_book_status
 from app.services.library_service import list_user_libraries
-from app.services.user_service import get_user_books
+from app.services.user_service import get_user_books, get_user_books_with_status
 from app.utils.flash import get_flashed_messages, flash
 
 router = APIRouter(prefix="/book", tags=["Books (HTML)"])
@@ -42,9 +43,13 @@ async def books_list(
     limit: int = 50,
 ):
     """Список всех книг"""
-    books = await get_all_books(db, skip, limit)
+    books_with_status = await get_all_accessible_book_with_status(db, current_user.id)
     return templates.TemplateResponse(
-        "books/list.html", {"request": request, "books": books, "user": current_user}
+        "books/list.html", {
+            "request": request,
+            "books_with_status": books_with_status,
+            "user": current_user
+        }
     )
 
 
@@ -59,10 +64,10 @@ async def all_books_page(request: Request, db: DBType):
 @router.get("/my", response_class=HTMLResponse)
 async def my_books(request: Request, db: DBType, current_user: CurrentUser):
     """Мои книги"""
-    books = await get_user_books(db, current_user.id)
+    books_with_status = await get_user_books_with_status(db, current_user.id)
     return templates.TemplateResponse(
         "books/user_books.html",
-        {"request": request, "books": books, "user": current_user},
+        {"request": request, "books_with_status": books_with_status, "user": current_user},
     )
 
 
@@ -101,9 +106,9 @@ async def create_book_submit(
     library_id: int = Form(...),
 ):
     """Обработка добавления книги"""
-    logger.info(f" ✅1 Жанр получен {genre}")
+    logger.info(f" ✅1 {read_status}")
     try:
-        logger.info(f" ✅2 Жанр получен {genre}")
+        logger.info(f" ✅2 {read_status}")
         library = await db.get(Library, library_id)
         if not library:
             raise HTTPException(status_code=404, detail="Библиотека не найдена")
@@ -238,7 +243,6 @@ async def edit_book_submit(
             flash(request, "Книга не найдена или нет прав", "error")
             return RedirectResponse(url="/book/", status_code=303)
 
-        logger.info(f" ✅ {genre}")
         update_data = BookUpdate(
             author=author,
             title=title,
@@ -251,9 +255,14 @@ async def edit_book_submit(
             shelf=shelf,
         )
         logger.info(f" ✅ {update_data}")
-        await update_book(db, current_user.id, book_id, update_data)
-        flash(request, f"Книга '{title}' обновлена!", "success")
-        return RedirectResponse(url=f"/book/{book_id}", status_code=303)
+        result = await update_book(db, current_user.id, book_id, update_data)
+
+        if result:
+            flash(request, f"Книга '{title}' обновлена!", "success")
+            return RedirectResponse(url=f"/book/{book_id}", status_code=303)
+        else:
+            flash(request, "Ошибка обновления книги", "error")
+            return RedirectResponse(url=f"book/{book_id}", status_code=303)
 
     except Exception as e:
         logger.error(f"Error updating book: {e}")
@@ -268,9 +277,17 @@ async def book_detail(
     """Страница книги"""
     book = await get_book_by_id(db, book_id)
     if not book:
+        flash(request, f"Книга не найдена", "error")
         return templates.TemplateResponse("errors/404.html", {"request": request})
     user = await get_username_by_book(db, book_id)
+    read_status = ReadStatus(await get_user_book_status(db, current_user.id, book_id))
+
     return templates.TemplateResponse(
         "books/info.html",
-        {"request": request, "book": book, "user": user, "current_user": current_user},
+        {"request": request,
+         "book": book,
+         "user": user,
+         "current_user": current_user,
+         "read_status": read_status.russian_name
+         },
     )
