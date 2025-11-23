@@ -22,6 +22,13 @@ class LibraryRole(str, Enum):
     GUEST = "guest"
 
 
+class BookPermission(str, Enum):
+    EDIT_FULL = "edit_full"
+    EDIT_STATUS = "edit_status"
+    EDIT_DESCRIPTION = "edit_description"
+    DELETE = "delete"
+
+
 class GenreStatus(str, Enum):
     ADVENTURE = "adventure"
     CHILDREN_S = "children's"

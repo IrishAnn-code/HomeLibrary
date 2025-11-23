@@ -4,20 +4,18 @@
 <article class="card container fluid">
     <div class="d-flex bd-highlight mb-3">
         <div class="me-auto p-3 bd-highlight fs-4">{{ book.author }}: {{ book.title }}</div>
-        {% if book.user_id == current_user.id %}
+
             <div class="btn-group">
-            <a href="/book/{{ book.id }}/edit" class="btn btn-outline-secondary d-flex align-items-center" >✏️</a>
-            <!-- ✅ Удаление с подтверждением -->
-            <button type="button" class="btn btn-outline-danger"
+               {% if permissions.can_edit_status %}
+                <a href="/book/{{ book.id }}/edit" class="btn btn-outline-secondary d-flex align-items-center" >✏️</a>
+               {% endif %}
+
+               {% if permissions.can_delete %}
+                <button type="button" class="btn btn-outline-danger"
                     onclick="confirmDelete({{ book.id }}, '{{ book.title }}')">🗑</button>
+               {% endif %}
+
             </div>
-        {% else %}
-        <!--
-          <div class="p-2 bd-highlight">
-            <a href="/library/join" class="btn btn-success">🔗 Присоединиться</a>
-          </div>
-        -->
-        {% endif %}
     </div>
 
     <div class="row">
@@ -87,6 +85,7 @@
 </article>
 
 <!-- ✅ Modal для подтверждения -->
+{% if permissions.can_delete %}
 <div class="modal fade" id="deleteModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -96,21 +95,20 @@
       </div>
       <div class="modal-body text-dark">
         <p>Вы действительно хотите удалить книгу <strong id="book-title"></strong>?</p>
-          <p class="text-danger">Это действие нельзя отменить!</p>
+        <div class="alert alert-warning mt-2">
+          <small>Это действие нельзя отменить</small>
+        </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          Отмена
-        </button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"> Отмена</button>
         <form id="deleteForm" method="post" style="display:inline;">
-          <button type="submit" class="btn btn-danger">
-            Удалить
-          </button>
+          <button type="submit" class="btn btn-danger">Удалить</button>
         </form>
       </div>
     </div>
   </div>
 </div>
+{% endif %}
 
 <style>
 .book-color {

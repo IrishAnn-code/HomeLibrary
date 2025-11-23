@@ -15,11 +15,10 @@ from app.services.book_service import (
     get_book_by_id,
     create_book,
     delete_book,
-    update_book,
     get_popular_genres,
     get_username_by_book,
     get_popular_authors,
-    get_all_accessible_book_with_status,
+    get_all_accessible_book_with_status, get_book_permission, update_book_with_permissions,
 )
 from app.services.book_status_service import get_user_book_status
 from app.services.library_service import list_user_libraries
@@ -203,7 +202,9 @@ async def edit_book_page(
         flash(request, "Книга не найдена", "error")
         return RedirectResponse(url="/book/", status_code=303)
 
-    if book.user_id != current_user.id:
+    permissions = await get_book_permission(db, current_user.id, book_id)
+
+    if not permissions["can_edit_status"]:
         flash(request, "У вас недостаточно прав на редактирование этой книги", "error")
         return RedirectResponse(url=f"/book/{book_id}", status_code=303)
 
@@ -221,6 +222,7 @@ async def edit_book_page(
             "popular_genres": popular_genres,
             "popular_authors": popular_authors,
             "user": current_user,
+            "permissions": permissions
         },
     )
 
@@ -243,37 +245,37 @@ async def edit_book_submit(
 ):
     """Обработка редактирования книги"""
     try:
-        book = await get_book_by_id(db, book_id)
+        permissions = await get_book_permission(db, current_user.id, book_id)
+        if not permissions['can_edit_status']:
+            flash(request, "Нет прав для редактирования", "error")
+            return RedirectResponse(url=f"/book/{book_id}", status_code=303)
 
-        if not book or book.user_id != current_user.id:
-            flash(request, "Книга не найдена или нет прав", "error")
+        book = await get_book_by_id(db, book_id)
+        if not book:
+            flash(request, "Книга не найдена", "error")
             return RedirectResponse(url="/book/", status_code=303)
 
-        update_data = BookUpdate(
-            author=author,
-            title=title,
-            description=description,
-            genre=genre,
-            color=color,
-            read_status=read_status,
-            lib_address=lib_address,
-            room=room,
-            shelf=shelf,
-        )
-        logger.info(f" ✅ {update_data}")
-        result = await update_book(db, current_user.id, book_id, update_data)
+        # Подменяем защищенные поля если нет прав
+        protected_fields = ['author', 'title', 'genre', 'color', 'lib_address', 'room', 'shelf']
+        form_data = {field: locals()[field] for field in protected_fields}
+        final_data = {k: getattr(book, k) if not permissions['can_edit_full'] else v
+                      for k, v in form_data.items()}
 
-        if result:
-            flash(request, f"Книга '{title}' обновлена!", "success")
-            return RedirectResponse(url=f"/book/{book_id}", status_code=303)
-        else:
-            flash(request, "Ошибка обновления книги", "error")
-            return RedirectResponse(url=f"book/{book_id}", status_code=303)
+        update_data = BookUpdate(
+            **final_data,
+            description=description,
+            read_status=read_status
+        )
+
+        logger.info(f"💾 Обновляемые данные: {update_data}")
+
+        await update_book_with_permissions(db, current_user.id, book_id, update_data, permissions)
+        flash(request, "Книга обновлена!", "success")
+        return RedirectResponse(url=f"/book/{book_id}", status_code=303)
 
     except Exception as e:
-        logger.error(f"Error updating book: {e}")
-        flash(request, f"Ошибка обновления: {str(e)}", "error")
-        return RedirectResponse(url=f"/books/{book_id}/edit", status_code=303)
+        flash(request, f"Ошибка: {str(e)}", "error")
+        return RedirectResponse(url=f"/book/{book_id}/edit", status_code=303)
 
 
 @router.get("/{book_id}", response_class=HTMLResponse)
@@ -285,8 +287,11 @@ async def book_detail(
     if not book:
         flash(request, f"Книга не найдена", "error")
         return templates.TemplateResponse("errors/404.html", {"request": request})
+
     user = await get_username_by_book(db, book_id)
     read_status = ReadStatus(await get_user_book_status(db, current_user.id, book_id))
+
+    permissions = await get_book_permission(db, current_user.id, book_id)
 
     return templates.TemplateResponse(
         "books/info.html",
@@ -296,5 +301,6 @@ async def book_detail(
             "user": user,
             "current_user": current_user,
             "read_status": read_status.russian_name,
+            "permissions": permissions
         },
     )

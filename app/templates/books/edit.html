@@ -1,35 +1,68 @@
 {% extends "base.html" %}
 
 {% block crud_container %}
-<div class="row justify-content-center">
+<div class="row justify-content-center" xmlns="http://www.w3.org/1999/html">
   <div class="col-md-8">
     <div class="card">
       <div class="card-body">
         <h3 class="card-title text-dark">Редактировать книгу</h3>
 
+        <!-- Информация о правах -->
+        {% if not permissions.can_edit_full %}
+        <div class="alert alert-info">
+          <small>
+            🔒 Вы можете изменять только описание и статус чтения. <br>
+            Основные поля доступны только создателю книги или владельцу библиотеки.
+          </small>
+        </div>
+        {% endif %}
+
         <form action="/book/{{ book.id }}/edit" method="post">
           <div class="row">
+            <!-- Автор -->
             <div class="col-md-6 mb-3">
               <label class="form-label text-dark">Автор*</label>
+              {% if permissions.can_edit_full %}
               <input type="text" name="author" class="form-control"
                      value="{{ book.author }}" required>
+              {% else %}
+              <div class="form-control bg-light">
+                {{ book.author }}
+                <input type="hidden" name="author" value="{{ book.author }}">
+              </div>
+              <small class="text-muted">Только для чтения</small>
+              {% endif %}
             </div>
 
+            <!-- Название -->
             <div class="col-md-6 mb-3">
               <label class="form-label text-dark">Название*</label>
+              {% if permissions.can_edit_full %}
               <input type="text" name="title" class="form-control"
                      value="{{ book.title }}" required>
+              {% else %}
+              <div class="form-control bg-light">
+                {{ book.title }}
+                <input type="hidden" name="title" value="{{ book.title }}">
+              </div>
+              <small class="text-muted">Только для чтения</small>
+              {% endif %}
             </div>
           </div>
 
+          <!-- Описание (доступно всем) -->
           <div class="mb-3">
             <label class="form-label text-dark">Описание</label>
-            <textarea name="description" class="form-control" rows="3">{{ book.description or '' }}</textarea>
+            <textarea name="description" class="form-control" rows="3"
+                      placeholder="Добавьте описание книги...">{{ book.description or '' }}</textarea>
+            <small class="text-muted">Все участники могут редактировать описание</small>
           </div>
 
           <div class="row">
+            <!-- Жанр -->
             <div class="col-md-6 mb-3">
               <label class="form-label text-dark">Жанр</label>
+              {% if permissions.can_edit_full %}
               <input type="text" name="genre" class="form-control"
                      list="genre-suggestions" value="{{ book.genre or '' }}">
               <datalist id="genre-suggestions">
@@ -37,18 +70,35 @@
                   <option value="{{ g.genre }}">
                 {% endfor %}
               </datalist>
+              {% else %}
+              <div class="form-control bg-light">
+                {{ book.genre or 'Не указан' }}
+                <input type="hidden" name="genre" value="{{ book.genre or '' }}">
+              </div>
+              <small class="text-muted">Только для чтения</small>
+              {% endif %}
             </div>
 
+            <!-- Статус чтения (доступен всем) -->
             <div class="col-md-6 mb-3">
               <label class="form-label text-dark">Статус чтения*</label>
-              <select id="read_status" name="read_status" class="form-select" required>
-                <option value="not_read">Не прочитано</option>
-                <option value="reading">Читаю</option>
-                <option value="read">Прочитано</option>
+              <select name="read_status" class="form-select" required>
+                <option value="not_read" {% if book.read_status == 'not_read' %}selected{% endif %}>
+                  📚 Не прочитано
+                </option>
+                <option value="reading" {% if book.read_status == 'reading' %}selected{% endif %}>
+                  📖 Читаю
+                </option>
+                <option value="read" {% if book.read_status == 'read' %}selected{% endif %}>
+                  ✅ Прочитано
+                </option>
               </select>
+              <small class="text-muted">Все участники могут менять статус</small>
             </div>
           </div>
 
+          <!-- Библиотека (только для полного доступа) -->
+          {% if permissions.can_edit_full %}
           <div class="mb-3">
             <label class="form-label text-dark">Библиотека*</label>
             <select name="library_id" class="form-select" required>
@@ -60,40 +110,111 @@
               {% endfor %}
             </select>
           </div>
+          {% else %}
+          <input type="hidden" name="library_id" value="{{ book.library_id }}">
+          {% endif %}
 
+          <!-- Расположение книги -->
           <div class="row">
             <div class="col-md-4 mb-3">
               <label class="form-label text-dark">Адрес</label>
+              {% if permissions.can_edit_full %}
               <input type="text" name="lib_address" class="form-control"
                      value="{{ book.lib_address or '' }}">
+              {% else %}
+              <div class="form-control bg-light">
+                {{ book.lib_address or 'Не указан' }}
+                <input type="hidden" name="lib_address" value="{{ book.lib_address or '' }}">
+              </div>
+              {% endif %}
             </div>
 
             <div class="col-md-4 mb-3">
               <label class="form-label text-dark">Комната</label>
+              {% if permissions.can_edit_full %}
               <input type="text" name="room" class="form-control"
                      value="{{ book.room or '' }}">
+              {% else %}
+              <div class="form-control bg-light">
+                {{ book.room or 'Не указана' }}
+                <input type="hidden" name="room" value="{{ book.room or '' }}">
+              </div>
+              {% endif %}
             </div>
 
             <div class="col-md-4 mb-3">
               <label class="form-label text-dark">Полка</label>
+              {% if permissions.can_edit_full %}
               <input type="text" name="shelf" class="form-control"
                      value="{{ book.shelf or '' }}">
+              {% else %}
+              <div class="form-control bg-light">
+                {{ book.shelf or 'Не указана' }}
+                <input type="hidden" name="shelf" value="{{ book.shelf or '' }}">
+              </div>
+              {% endif %}
             </div>
           </div>
 
+          <!-- Цвет (только для полного доступа) -->
           <div class="mb-3">
             <label class="form-label text-dark">Цвет обложки</label>
+            {% if permissions.can_edit_full %}
             <input type="color" name="color" class="form-control form-control-color"
-                   value="{{ book.color or '#3498db' }}">
+                   value="{{ book.color or '#3498db' }}" title="Выберите цвет обложки">
+            {% else %}
+            <div class="d-flex align-items-center">
+              <input type="color" class="form-control form-control-color me-2"
+                     value="{{ book.color or '#3498db' }}" disabled style="width: 50px;">
+              <span class="text-muted">Только для чтения</span>
+              <input type="hidden" name="color" value="{{ book.color or '#3498db' }}">
+            </div>
+            {% endif %}
           </div>
 
           <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-success">Сохранить</button>
-            <a href="/book/{{ book.id }}" class="btn btn-secondary">Отмена</a>
+            <button type="submit" class="btn btn-success">
+              💾 Сохранить изменения
+            </button>
+            <a href="/book/{{ book.id }}" class="btn btn-secondary">← Отмена</a>
+
+            <!-- Кнопка удаления для имеющих права -->
+            {% if permissions.can_delete %}
+            <button type="button" class="btn btn-danger ms-auto"
+                    data-bs-toggle="modal" data-bs-target="#deleteModal">
+              🗑️ Удалить книгу
+            </button>
+            {% endif %}
           </div>
         </form>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Модальное окно удаления -->
+{% if permissions.can_delete %}
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-dark">Подтверждение удаления</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-dark">
+        <p>Вы действительно хотите удалить книгу <strong>{{ book.title }}</strong>?</p>
+        <div class="alert alert-warning mt-2">
+          <small>Это действие нельзя отменить</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <form action="/book/{{ book.id }}/delete" method="post" class="display:inline;e">
+          <button type="submit" class="btn btn-danger">Удалить</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}

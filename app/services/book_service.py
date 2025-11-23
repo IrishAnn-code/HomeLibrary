@@ -3,7 +3,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, func
 
-from app.models import Book, User, Library
+from app.models import Book, User, Library, UserLibrary
+from app.models.enum import LibraryRole, BookPermission
 from app.schemas.book import BookCreate, BookUpdate
 from app.services.book_status_service import (
     update_user_book_status,
@@ -132,6 +133,46 @@ async def update_book(db: AsyncSession, user_id: int, book_id: int, data: BookUp
     return True
 
 
+async def update_book_with_permissions(db: AsyncSession, user_id: int, book_id: int, data: BookUpdate, permissions: dict):
+    """Упрощенная версия обновления книги"""
+    try:
+        logger.info(f"🔧 Обновление книги {book_id} пользователем {user_id}")
+
+        if not permissions or not permissions.get('can_edit_status', False):
+            return None
+
+        book = await db.scalar(select(Book).where(Book.id == book_id))
+        if not book:
+            return None
+
+        has_full_access = permissions.get('can_edit_full', False)
+
+        # Обновляем описание (всегда доступно)
+        if data.description is not None:
+            book.description = data.description
+
+        # Обновляем защищенные поля (только при полном доступе)
+        if has_full_access:
+            book.author = data.author
+            book.title = data.title
+            book.genre = data.genre
+            book.color = data.color
+            book.lib_address = data.lib_address
+            book.room = data.room
+            book.shelf = data.shelf
+
+        # Обновляем статус чтения
+        await update_user_book_status(db, user_id, book_id, data.read_status)
+
+        await db.commit()
+        logger.info(f"✅ Книга обновлена успешно")
+        return True
+
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"❌ Ошибка: {e}")
+        return None
+
 async def get_popular_genres(db: AsyncSession, limit: int = 20):
     """
     Получить список популярных жанров.
@@ -226,3 +267,70 @@ async def get_all_accessible_book_with_status(
     books = await get_all_accessible_books(db, user_id, skip, limit)
     books_with_status = await add_read_status_to_book(db, user_id, books)
     return books_with_status
+
+
+async def get_book_permission(db: AsyncSession, user_id: int, book_id: int) -> dict[str, bool]:
+    """
+    Проверяет права на редактирование книги.
+    :return: Возвращает словарь с булевыми значениями для каждого права.
+    """
+    try:
+        # Получаем книгу и информацию о библиотеке
+        result = await db.execute(
+            select(
+                Book.user_id,
+                UserLibrary.role
+            )
+            .join(Library, Book.library_id == Library.id)
+            .outerjoin(
+                UserLibrary,
+                (UserLibrary.library_id == Library.id) &
+                (UserLibrary.user_id == user_id)
+            )
+            .where(Book.id == book_id)
+        )
+
+        row = result.first()
+        if not row:
+            raise HTTPException(status_code=404, detail="Книга не найдена или нет доступа")
+
+        book_user_id, user_role = row
+
+        # Проверяем членство в библиотеке
+        if not user_role:
+            raise HTTPException(403, "Нет доступа к библиотеке")
+
+        # Определяем права
+        is_owner = (user_role == LibraryRole.OWNER)
+        is_book_creator = (book_user_id == user_id)
+        is_member_plus = user_role in [LibraryRole.OWNER, LibraryRole.MEMBER]
+
+        logger.info(f"🔑 Права для user_id={user_id}, book_id={book_id}: "
+                    f"role={user_role}, is_owner={is_owner}, is_book_creator={is_book_creator}, "
+                    f"is_member_plus={is_member_plus}")
+
+        permissions = {
+            'can_edit_full': is_owner or is_book_creator,
+            'can_edit_status': is_member_plus,
+            'can_edit_description': is_member_plus,
+            'can_delete': is_owner or is_book_creator,
+            'role': user_role,
+            'is_book_creator': is_book_creator
+        }
+        return permissions
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка при проверке прав: {str(e)}")
+
+
+async def require_book_permission(db: AsyncSession, user_id: int, book_id: int,
+                                  required_permission: BookPermission):
+    """Зависимость для проверки доступа к редактированию"""
+    permissions = await get_book_permission(db, user_id, book_id)
+
+    if not permissions.get(required_permission.value, False):
+        raise HTTPException(status_code=403, detail=f"Недостаточно прав: {required_permission.value}")
+
+    return permissions
