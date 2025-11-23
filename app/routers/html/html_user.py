@@ -1,4 +1,3 @@
-from typing import Annotated
 from fastapi import APIRouter, Request, Depends, Form, status
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -6,6 +5,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 import logging
+from typing import Annotated
 
 from app.core.config import settings
 from app.database.auth import get_current_user

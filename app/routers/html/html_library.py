@@ -1,9 +1,8 @@
-from http.client import HTTPException
-from typing import Annotated
-from fastapi import APIRouter, Request, Depends, Form
+from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 import logging
+from typing import Annotated
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,7 +10,6 @@ from app.database.auth import get_current_user
 from app.database.db_depends import get_db
 from app.models import User
 from app.services import library_service
-from app.services.library_service import get_library_books_with_status
 from app.utils.flash import get_flashed_messages, flash
 
 router = APIRouter(prefix="/library", tags=["Libraries (HTML)"])
@@ -139,7 +137,9 @@ async def library_detail(
     is_member = await library_service.is_library_member(db, current_user.id, library_id)
     if is_member:
         library = await library_service.get_library(db, library_id)
-        books_with_status = await get_library_books_with_status(db, library_id, current_user.id)
+        books_with_status = await library_service.get_library_books_with_status(
+            db, library_id, current_user.id
+        )
 
         logger.info(f"!!!!!🔍 {books_with_status}")
         return templates.TemplateResponse(
@@ -154,5 +154,3 @@ async def library_detail(
     else:
         flash(request, "Вы не участник этой библиотеки", "error")
         return RedirectResponse(url="/library", status_code=303)
-
-

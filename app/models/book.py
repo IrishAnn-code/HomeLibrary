@@ -37,4 +37,6 @@ class Book(Base):
     # 🔗 связи
     library = relationship("Library", back_populates="books")
     user = relationship("User", back_populates="books")
-    user_statuses = relationship("UserBookStatus", back_populates="book", cascade="all, delete-orphan")
+    user_statuses = relationship(
+        "UserBookStatus", back_populates="book", cascade="all, delete-orphan"
+    )

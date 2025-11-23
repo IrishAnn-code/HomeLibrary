@@ -5,10 +5,11 @@ from sqlalchemy.orm import relationship
 
 class UserBookStatus(Base):
     """Статус чтения книги для конкретного пользователя"""
+
     __tablename__ = "user_book_status"
     __table_args__ = (
         UniqueConstraint("user_id", "book_id", name="uq_user_book"),
-        {"extend_existing": True}
+        {"extend_existing": True},
     )
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)

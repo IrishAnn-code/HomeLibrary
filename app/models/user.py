@@ -47,4 +47,4 @@ class User(Base):
     books = relationship("Book", back_populates="user")  # , cascade="all, delete"
 
     # 5. Даем доступ для статусов чтения
-    book_read_statuses= relationship("UserBookStatus", back_populates="user")
+    book_read_statuses = relationship("UserBookStatus", back_populates="user")

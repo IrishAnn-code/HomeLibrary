@@ -1,15 +1,14 @@
-import logging
-from typing import Annotated
-
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+import logging
+from typing import Annotated
 
 from app.database.auth import get_current_user
 from app.database.db_depends import get_db
 from app.models import User, Library
-from app.models.enum import GenreStatus, ReadStatus
+from app.models.enum import ReadStatus
 from app.schemas.book import BookUpdate, BookCreate
 from app.services.book_service import (
     get_all_books,
@@ -18,11 +17,13 @@ from app.services.book_service import (
     delete_book,
     update_book,
     get_popular_genres,
-    get_username_by_book, get_popular_authors, get_all_accessible_book_with_status,
+    get_username_by_book,
+    get_popular_authors,
+    get_all_accessible_book_with_status,
 )
 from app.services.book_status_service import get_user_book_status
 from app.services.library_service import list_user_libraries
-from app.services.user_service import get_user_books, get_user_books_with_status
+from app.services.user_service import get_user_books_with_status
 from app.utils.flash import get_flashed_messages, flash
 
 router = APIRouter(prefix="/book", tags=["Books (HTML)"])
@@ -45,11 +46,12 @@ async def books_list(
     """Список всех книг"""
     books_with_status = await get_all_accessible_book_with_status(db, current_user.id)
     return templates.TemplateResponse(
-        "books/list.html", {
+        "books/list.html",
+        {
             "request": request,
             "books_with_status": books_with_status,
-            "user": current_user
-        }
+            "user": current_user,
+        },
     )
 
 
@@ -67,7 +69,11 @@ async def my_books(request: Request, db: DBType, current_user: CurrentUser):
     books_with_status = await get_user_books_with_status(db, current_user.id)
     return templates.TemplateResponse(
         "books/user_books.html",
-        {"request": request, "books_with_status": books_with_status, "user": current_user},
+        {
+            "request": request,
+            "books_with_status": books_with_status,
+            "user": current_user,
+        },
     )
 
 
@@ -135,7 +141,7 @@ async def create_book_submit(
                 "request": request,
                 "error": str(e),
                 "libraries": libraries,
-                "user": current_user
+                "user": current_user,
             },
         )
 
@@ -284,10 +290,11 @@ async def book_detail(
 
     return templates.TemplateResponse(
         "books/info.html",
-        {"request": request,
-         "book": book,
-         "user": user,
-         "current_user": current_user,
-         "read_status": read_status.russian_name
-         },
+        {
+            "request": request,
+            "book": book,
+            "user": user,
+            "current_user": current_user,
+            "read_status": read_status.russian_name,
+        },
     )

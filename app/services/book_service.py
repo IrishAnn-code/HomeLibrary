@@ -5,7 +5,10 @@ from sqlalchemy import select, update, func
 
 from app.models import Book, User, Library
 from app.schemas.book import BookCreate, BookUpdate
-from app.services.book_status_service import update_user_book_status, add_read_status_to_book
+from app.services.book_status_service import (
+    update_user_book_status,
+    add_read_status_to_book,
+)
 from app.services.library_service import list_user_libraries, is_library_member
 from app.services.user_service import get_user_by_id
 from app.utils.helpers import make_slug, normalize_author_name
@@ -47,13 +50,15 @@ async def create_book(
         if not library:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail='f"Library {library_id} not found"')
+                detail='f"Library {library_id} not found"',
+            )
 
         membership = await is_library_member(db, user_id, library_id)
         if not membership:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="You are not a member of this library")
+                detail="You are not a member of this library",
+            )
 
         slug = make_slug(f"{data.author}-{data.title}", unique=True)
         book = Book(
@@ -86,13 +91,14 @@ async def create_book(
         logger.error(f"❌ IntegrityError creating book: {e}")
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Book with this slug already exists")
+            detail="Book with this slug already exists",
+        )
     except Exception as e:
         await db.rollback()
         logger.error(f"❌ Error creating book: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create book"
+            detail="Failed to create book",
         )
 
 
@@ -174,7 +180,9 @@ async def get_popular_authors(db: AsyncSession, limit: int = 50):
     return authors
 
 
-async def get_all_accessible_books(db: AsyncSession, user_id: int, skip: int = 0, limit: int = 100):
+async def get_all_accessible_books(
+    db: AsyncSession, user_id: int, skip: int = 0, limit: int = 100
+):
     """
     Получить все книги из всех библиотек, где состоит пользователь.
     Включает как его собственные книги, так и книги других пользователей.
@@ -192,7 +200,7 @@ async def get_all_accessible_books(db: AsyncSession, user_id: int, skip: int = 0
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Пользователь: {user_id} не был найден "
+            detail=f"Пользователь: {user_id} не был найден ",
         )
 
     user_libraries = await list_user_libraries(db, user_id)
@@ -211,7 +219,9 @@ async def get_all_accessible_books(db: AsyncSession, user_id: int, skip: int = 0
     return books.all()
 
 
-async def get_all_accessible_book_with_status(db: AsyncSession, user_id: int, skip: int = 0, limit: int = 100):
+async def get_all_accessible_book_with_status(
+    db: AsyncSession, user_id: int, skip: int = 0, limit: int = 100
+):
     """Все доступные пользователю книги со статусами"""
     books = await get_all_accessible_books(db, user_id, skip, limit)
     books_with_status = await add_read_status_to_book(db, user_id, books)
