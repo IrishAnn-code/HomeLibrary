@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, status, HTTPException, Request
+from fastapi import APIRouter, Depends, status, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 

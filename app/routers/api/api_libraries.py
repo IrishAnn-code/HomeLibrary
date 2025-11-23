@@ -7,7 +7,6 @@ from app.database.auth import get_current_user
 from app.models import User
 from app.schemas.library import LibraryCreate
 from app.services.library_service import (
-    get_library,
     create_library,
     list_user_libraries,
     all_books_in_lib,

@@ -1,11 +1,8 @@
 from datetime import datetime, timezone
 
 from app.database.db import Base
-from sqlalchemy import Column, String, Integer, Boolean, ForeignKey, DateTime
-from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import Column, String, Integer, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
-
-from app.models.enum import ReadStatus
 
 
 # ---------- Book ---------- #

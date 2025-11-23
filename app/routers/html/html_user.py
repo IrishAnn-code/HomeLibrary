@@ -11,7 +11,7 @@ from app.core.config import settings
 from app.database.auth import get_current_user
 from app.database.db_depends import get_db
 from app.models import User
-from app.schemas.user import UserCreate, UserUpdate
+from app.schemas.user import UserUpdate
 from app.services import user_service
 from app.utils.jwt import create_access_token
 from app.utils.flash import flash, get_flashed_messages

@@ -1,5 +1,3 @@
-from typing import Annotated
-
 from fastapi import FastAPI, Request, Depends
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
@@ -7,19 +5,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from slowapi.middleware import SlowAPIMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from starlette.middleware.sessions import SessionMiddleware
+
+from typing import Annotated
+import logging
 
 from app.database.auth import get_current_user_optional
 from app.models import User
 from app.routers.api import api_books, api_users, api_libraries
 from app.routers.html import html_book, html_user, html_library
 from app.core.config import settings
-
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-import logging
-
 from app.utils.flash import get_flashed_messages
 
 # ✅ Настройка логирования

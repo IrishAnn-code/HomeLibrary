@@ -5,12 +5,8 @@ from fastapi import HTTPException, status
 import logging
 
 from app.models import Book, User
-from app.models.enum import ReadStatus
 from app.schemas.user import UserUpdate
-from app.services.book_status_service import (
-    get_user_book_status,
-    add_read_status_to_book,
-)
+from app.services.book_status_service import add_read_status_to_book
 from app.utils.hashing import hash_password, verify_password
 
 

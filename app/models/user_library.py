@@ -1,5 +1,5 @@
 from app.database.db import Base
-from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy import Column, Integer, ForeignKey
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from app.models.enum import LibraryRole
