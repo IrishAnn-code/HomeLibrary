@@ -5,14 +5,14 @@
     <div class="d-flex bd-highlight mb-3">
         <div class="me-auto p-3 bd-highlight fs-4">{{ book.author }}: {{ book.title }}</div>
 
-            <div class="btn-group">
+            <div class="d-flex gap-2 align-items-center">
                {% if permissions.can_edit_status %}
                 <a href="/book/{{ book.id }}/edit" class="btn btn-outline-secondary d-flex align-items-center" >✏️</a>
                {% endif %}
 
                {% if permissions.can_delete %}
                 <button type="button" class="btn btn-outline-danger"
-                    onclick="confirmDelete({{ book.id }}, '{{ book.title }}')">🗑</button>
+                    onclick="confirmDelete({{ book.id }}, '{{ book.title }}', '{{ book.author }}')">🗑</button>
                {% endif %}
 
             </div>
@@ -87,17 +87,22 @@
 <!-- ✅ Modal для подтверждения -->
 {% if permissions.can_delete %}
 <div class="modal fade" id="deleteModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title text-dark">Подтверждение удаления</h5>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title text-dark w-100">Подтверждение удаления</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body text-dark">
-        <p>Вы действительно хотите удалить книгу <strong id="book-title"></strong>?</p>
-        <div class="alert alert-warning mt-2">
-          <small>Это действие нельзя отменить</small>
-        </div>
+          <div class="alert alert-danger py-2">
+                <div class="text-center fw-bold mb-1">ЭТО ДЕЙСТВИЕ НЕЛЬЗЯ ОТМЕНИТЬ</div>
+                <div class="text-center">
+                  Вы действительно хотите удалить книгу?
+                  <div class="mt-2 p-2 bg-light rounded border">
+                          <strong id="book-full-info" class="text-danger">Автор: «Название книги»</strong>
+                  </div>
+                </div>
+          </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"> Отмена</button>
@@ -134,9 +139,12 @@
 </style>
 
 <script>
-function confirmDelete(bookId, bookTitle) {
-  // Устанавливаем название книги
-  document.getElementById('book-title').textContent = bookTitle;
+function confirmDelete(bookId, bookTitle, bookAuthor = null) {
+  //Формируем текст с автором и названием книги
+  const displayText = bookAuthor ? `${bookAuthor}: «${bookTitle}»` : `«${bookTitle}»`;
+
+  // Устанавливаем текст в единственный элемент
+  document.getElementById('book-full-info').textContent = displayText;
 
   // Устанавливаем action формы
   document.getElementById('deleteForm').action = `/book/${bookId}/delete`;
