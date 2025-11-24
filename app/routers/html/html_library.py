@@ -129,6 +129,41 @@ async def join_library_submit(
         return RedirectResponse(url=f"/library/{library_id}/join", status_code=303)
 
 
+@router.post("/{library_id}/leave")
+async def library_leave_submit(
+    request: Request, db: DBType, library_id: int, current_user: CurrentUser
+):
+    """Выйти из библиотеки"""
+    success, message = await library_service.leave_library(
+        db, library_id, current_user.id
+    )
+
+    if success:
+        flash(request, message, "success")
+        return RedirectResponse(url="/library/", status_code=303)
+    else:
+        flash(request, message, "error")
+        return RedirectResponse(url="/library/{library_id}", status_code=303)
+
+
+@router.post("/{library_id}/delete")
+async def delete_library_submit(
+    request: Request, db: DBType, library_id, current_user: CurrentUser
+):
+    """Удалить библиотеку"""
+    ## когда появится админ-панель, добавить в список current_user.is_admin
+    success, message = await library_service.delete_library(
+        db, library_id, current_user.id
+    )
+
+    if success:
+        flash(request, message, "success")
+        return RedirectResponse(url="/library/", status_code=303)
+    else:
+        flash(request, message, "error")
+        return RedirectResponse(url="/library/{library_id}", status_code=303)
+
+
 @router.get("/{library_id}", response_class=HTMLResponse)
 async def library_detail(
     request: Request, db: DBType, library_id: int, current_user: CurrentUser

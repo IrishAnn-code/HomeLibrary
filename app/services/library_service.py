@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from sqlalchemy import select, update, delete
 import logging
 
 from app.models import Book, Library, UserLibrary
@@ -182,3 +182,51 @@ async def list_of_libs_to_join(db: AsyncSession, user_id: int, query: str = ""):
         return result.scalars().all()
     else:
         return []
+
+
+async def leave_library(
+    db: AsyncSession, library_id: int, user_id: int
+) -> tuple[bool, str]:
+    """
+    Выйти из библиотеки
+    :return: tuple: (success: bool, message: str)
+    """
+    library = await get_library(db, library_id)
+    if not library:
+        return False, "Библиотека не найдена."
+
+    if library.owner_id == user_id:
+        return (
+            False,
+            "Создатель не может выйти из библиотеки. Воспользуйтесь удалением.",
+        )
+
+    membership = await is_library_member(db, user_id, library_id)
+    if not membership:
+        return False, "Вы не состоите в этой библиотеке"
+
+    await db.delete(membership)
+    await db.commit()
+
+    logger.info(f"Пользователь {user_id} покинул библиотеку - '{library.name}'")
+    return True, "Вы покинули библиотеку"
+
+
+async def delete_library(
+    db: AsyncSession, library_id: int, user_id: int, is_admin: bool = False
+) -> tuple[bool, str]:
+    """
+    Удалить библиотеку (только owner или admin)
+    :return: tuple: (success: bool, message: str)
+    """
+    library = await get_library(db, library_id)
+    if not library:
+        return False, "Библиотека не найдена."
+
+    if library.owner_id != user_id and not is_admin:
+        return False, "Только владелец библиотеки или админ могут удалить библиотеку"
+
+    await db.delete(library)
+    await db.commit()
+    logger.info(f"Библиотека '{library.name}' была удалена пользователем {user_id}")
+    return True, f"Библиотека '{library.name}' удалена."

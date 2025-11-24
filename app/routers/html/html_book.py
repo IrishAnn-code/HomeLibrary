@@ -18,7 +18,9 @@ from app.services.book_service import (
     get_popular_genres,
     get_username_by_book,
     get_popular_authors,
-    get_all_accessible_book_with_status, get_book_permission, update_book_with_permissions,
+    get_all_accessible_book_with_status,
+    get_book_permission,
+    update_book_with_permissions,
 )
 from app.services.book_status_service import get_user_book_status
 from app.services.library_service import list_user_libraries
@@ -222,7 +224,7 @@ async def edit_book_page(
             "popular_genres": popular_genres,
             "popular_authors": popular_authors,
             "user": current_user,
-            "permissions": permissions
+            "permissions": permissions,
         },
     )
 
@@ -246,7 +248,7 @@ async def edit_book_submit(
     """Обработка редактирования книги"""
     try:
         permissions = await get_book_permission(db, current_user.id, book_id)
-        if not permissions['can_edit_status']:
+        if not permissions["can_edit_status"]:
             flash(request, "Нет прав для редактирования", "error")
             return RedirectResponse(url=f"/book/{book_id}", status_code=303)
 
@@ -256,20 +258,30 @@ async def edit_book_submit(
             return RedirectResponse(url="/book/", status_code=303)
 
         # Подменяем защищенные поля если нет прав
-        protected_fields = ['author', 'title', 'genre', 'color', 'lib_address', 'room', 'shelf']
+        protected_fields = [
+            "author",
+            "title",
+            "genre",
+            "color",
+            "lib_address",
+            "room",
+            "shelf",
+        ]
         form_data = {field: locals()[field] for field in protected_fields}
-        final_data = {k: getattr(book, k) if not permissions['can_edit_full'] else v
-                      for k, v in form_data.items()}
+        final_data = {
+            k: getattr(book, k) if not permissions["can_edit_full"] else v
+            for k, v in form_data.items()
+        }
 
         update_data = BookUpdate(
-            **final_data,
-            description=description,
-            read_status=read_status
+            **final_data, description=description, read_status=read_status
         )
 
         logger.info(f"💾 Обновляемые данные: {update_data}")
 
-        await update_book_with_permissions(db, current_user.id, book_id, update_data, permissions)
+        await update_book_with_permissions(
+            db, current_user.id, book_id, update_data, permissions
+        )
         flash(request, "Книга обновлена!", "success")
         return RedirectResponse(url=f"/book/{book_id}", status_code=303)
 
@@ -301,6 +313,6 @@ async def book_detail(
             "user": user,
             "current_user": current_user,
             "read_status": read_status.russian_name,
-            "permissions": permissions
+            "permissions": permissions,
         },
     )

@@ -1,9 +1,24 @@
 {% extends "base.html" %}
 
 {% block crud_container %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h2>📚 {{ library.name }}</h2>
-  <a href="/book/create?library_id={{ library.id }}" class="btn btn-success">➕ Добавить книгу</a>
+<div class="d-flex bd-highlight mb-3">
+  <div class="me-auto p-1 bd-highlight fs-3">📚 {{ library.name }}</div>
+    <div class="p-2 bd-highlight">
+      <a href="/book/create?library_id={{ library.id }}" class="btn btn-success">➕ Добавить книгу</a>
+    </div>
+    <div class="p-2 bd-highlight">
+      {% if library.owner_id == user.id %}
+         <button onclick="confirmDelete()" class="btn btn-danger">
+            🗑 Удалить библиотеку
+         </button>
+      {% else %}
+      <form action="/library/{{ library.id }}/leave" method="post">
+        <button type="submit" class="btn btn-warning" onclick="return confirm('Выйти из библиотеки?')">
+          🚪 Выйти из библиотеки
+        </button>
+      </form>
+      {% endif %}
+    </div>
 </div>
 
 {% if books_with_status %}
