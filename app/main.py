@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, Depends
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 
 from slowapi.middleware import SlowAPIMiddleware
@@ -61,6 +62,10 @@ app = FastAPI(
     debug=settings.DEBUG,
     lifespan=lifespan,
 )
+
+# Подключение статических файлов
+app.mount("/static", StaticFiles(directory="app/static", html=True), name="static")
+
 
 # ✅ Привязываем limiter к app
 app.state.limiter = limiter
