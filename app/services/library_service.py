@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete
+from sqlalchemy import select, update, delete, func
 import logging
 
 from app.models import Book, Library, UserLibrary
@@ -164,24 +164,28 @@ async def update_name(db: AsyncSession, new_name: str, lib_id: int, user_id: int
     return True
 
 
-async def list_of_libs_to_join(db: AsyncSession, user_id: int, query: str = ""):
+async def search_libraries_to_join(db: AsyncSession, user_id: int, query: str = ""):
     """
-    Список библиотек для присоединения, которые не принадлежат пользователю
+    Поиск библиотек по названию (регистронезависимый для латиницы и кириллицы).
+    Список библиотек для присоединения, в которых пользователь не OWNER и не MEMBER.
     """
-    if query:
-        my_lib_ids = [lib.id for lib in await list_user_libraries(db, user_id)]
-        search_query = f"%{query}%"
-
-        result = await db.execute(
-            select(Library)
-            .where(Library.name.ilike(search_query))
-            .where(Library.id.notin_(my_lib_ids))
-            .order_by(Library.name)
-        )
-        logger.info(f"ASDFGHJKL:{result}")
-        return result.scalars().all()
-    else:
+    query = query.lower().strip()
+    if not query:
         return []
+
+    my_lib_ids = [lib.id for lib in await list_user_libraries(db, user_id)]
+
+    result = await db.execute(
+        select(Library).where(Library.id.notin_(my_lib_ids)).order_by(Library.name)
+    )
+    all_libraries = result.scalars().all()
+    matching = [lib for lib in all_libraries if query in lib.name.lower()]
+
+    logger.info(f"🔍 Поиск библиотек: запрос='{query}'")
+    logger.info(f"📚 Всего библиотек для поиска: {len(all_libraries)}")
+    logger.info(f"✅ Найдено совпадений: {len(matching)}")
+
+    return matching
 
 
 async def leave_library(

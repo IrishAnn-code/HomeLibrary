@@ -76,7 +76,7 @@ async def search_libraries(
 ):
     """Поиск библиотек для присоединения"""
     logger.info(f"🎯 START SEARCH: query='{q}'")
-    libraries = await library_service.list_of_libs_to_join(db, current_user.id, q)
+    libraries = await library_service.search_libraries_to_join(db, current_user.id, q)
     return templates.TemplateResponse(
         "libraries/search.html",
         {"request": request, "libraries": libraries, "query": q, "user": current_user},
