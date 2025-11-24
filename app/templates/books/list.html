@@ -1,9 +1,14 @@
 {% extends 'base.html'%}
 
 {% block crud_container %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h2>Все книги</h2>
-  <a href="/book/create" class="btn btn-success">➕ Добавить книгу</a>
+<div class="d-flex bd-highlight mb-3">
+  <div class="me-auto p-1 bd-highlight fs-3">Все книги</div>
+  <div class="p-2 bd-highlight">
+    <a href="/book/create" class="btn btn-success">➕ Добавить книгу</a>
+  </div>
+  <div class="p-2 bd-highlight">
+    <a href="/book/search" class="btn btn-secondary">🔍</a>
+  </div>
 </div>
 
 {% if books_with_status %}

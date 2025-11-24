@@ -1,10 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block crud_container %}
+<h2>🔍 Поиск книг</h2>
+
+<form method="get" class="mb-4">
+  <br>
+  <div class="input-group">
+    <input type="text" name="q" class="form-control"
+           placeholder="Введите название книги или имя автора" value="{{ query }}">
+    <button type="submit" class="btn btn-success">Искать</button>
+  </div>
+</form>
+
+{% if available_books %}
+  <div class="row">
+    {% for item in available_books %}
+      <div class="col-md-4 mb-3">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title text-dark">
+                <a href="/book/{{ item.book.id }}" class="text-dark">
+                    {{ item.book.author }}: {{ item.book.title }} </a>
+            </h5>
+            <p class="card-text">
+                <strong>Библиотека:</strong> {{ item.book.lib_address or "Не указана" }} <br>
+                <strong>Мой статус прочтения:</strong> {{ item.read_status.russian_name }}
+            </p>
+            </div>
+          </div>
+        </div>
+    {% endfor %}
+  </div>
+{% elif query %}
+  <div class="alert alert-secondary">
+    Библиотек не найдено. Попробуйте другой запрос.
+  </div>
+{% endif %}
+{% endblock %}

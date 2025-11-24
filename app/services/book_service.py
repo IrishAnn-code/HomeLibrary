@@ -345,3 +345,26 @@ async def require_book_permission(
         )
 
     return permissions
+
+
+async def search_available_books(
+    db: AsyncSession, user_id, query: str = ""
+) -> list[Book]:
+    """Поиск книг по автору или названию в доступных библиотеках"""
+    query = query.strip().lower()
+    if not query:
+        return []
+
+    books_with_status = await get_all_accessible_book_with_status(db, user_id)
+    logger.info(f"📚 Всего библиотек для поиска: {books_with_status}")
+    matching = [
+        item
+        for item in books_with_status
+        if query in item["book"].title.lower() or query in item["book"].author.lower()
+    ]
+
+    logger.info(f"🔍 Поиск библиотек: запрос='{query}'")
+    logger.info(f"📚 Всего библиотек для поиска: {len(books_with_status)}")
+    logger.info(f"✅ Найдено совпадений: {len(matching)}")
+
+    return matching

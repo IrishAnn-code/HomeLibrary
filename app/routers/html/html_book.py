@@ -21,6 +21,7 @@ from app.services.book_service import (
     get_all_accessible_book_with_status,
     get_book_permission,
     update_book_with_permissions,
+    search_available_books,
 )
 from app.services.book_status_service import get_user_book_status
 from app.services.library_service import list_user_libraries
@@ -148,12 +149,19 @@ async def create_book_submit(
 
 
 @router.get("/search", response_class=HTMLResponse)
-async def search_books(request: Request, db: DBType, q: str, current_user: CurrentUser):
-    """Поиск книг"""
-    books = await search_books(db, q)
+async def search_books(
+    request: Request, db: DBType, current_user: CurrentUser, q: str = ""
+):
+    """Поиск книг в доступных библиотеках"""
+    available_books = await search_available_books(db, current_user.id, q)
     return templates.TemplateResponse(
-        "books/search_results.html",
-        {"request": request, "books": books, "query": q, "user": current_user},
+        "books/search_result.html",
+        {
+            "request": request,
+            "available_books": available_books,
+            "query": q,
+            "user": current_user,
+        },
     )
 
 

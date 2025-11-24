@@ -9,9 +9,9 @@ class ReadStatus(str, Enum):
     @property
     def russian_name(self):
         names = {
-            ReadStatus.NOT_READ: "Не прочитано",
-            ReadStatus.READING: "Читаю",
-            ReadStatus.READ: "Прочитано",
+            ReadStatus.NOT_READ: "❌ Не прочитано",
+            ReadStatus.READING: "📖 Читаю",
+            ReadStatus.READ: "✅ Прочитано ",
         }
         return names[self]
 
