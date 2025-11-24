@@ -3,22 +3,23 @@
 {% block crud_container %}
 <div class="d-flex bd-highlight mb-3">
   <div class="me-auto p-1 bd-highlight fs-3">📚 {{ library.name }}</div>
-    <div class="p-2 bd-highlight">
-      <a href="/book/create?library_id={{ library.id }}" class="btn btn-success">➕ Добавить книгу</a>
-    </div>
-    <div class="p-2 bd-highlight">
-      {% if library.owner_id == user.id %}
-         <button onclick="confirmDelete()" class="btn btn-danger">
+
+  <div class="d-flex gap-2 align-items-center">
+    <a href="/book/create?library_id={{ library.id }}" class="btn btn-success">➕ Добавить книгу</a>
+
+    {% if library.owner_id == user.id %}
+      <button type="button" class="btn btn-outline-danger"
+              onclick="confirmDeleteLibrary({{ library.id }}, '{{ library.name }}')">
             🗑 Удалить библиотеку
-         </button>
-      {% else %}
-      <form action="/library/{{ library.id }}/leave" method="post">
-        <button type="submit" class="btn btn-warning" onclick="return confirm('Выйти из библиотеки?')">
+      </button>
+
+    {% else %}
+      <button type="button" class="btn btn-outline-warning"
+              onclick="confirmLeaveLibrary({{ library.id }}, '{{ library.name }}')">
           🚪 Выйти из библиотеки
         </button>
-      </form>
-      {% endif %}
-    </div>
+    {% endif %}
+  </div>
 </div>
 
 {% if books_with_status %}
@@ -61,4 +62,79 @@
 <div class="d-flex justify-content-end">
   id: {{ library.id }}
 </div>
+<!-- ✅ Modal для подтверждения удаления библиотеки -->
+<div class="modal fade" id="deleteLibraryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-center">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title w-100" >Подтверждение удаления библиотеки</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-dark">
+              <div class="alert alert-danger py-3">
+                  <div class="text-center fw-bold mb-1">Библиотека и все книги будут удалены безвозвратно</div>
+                  <div class="text-center">
+                      Вы действительно хотите удалить библиотеку?
+                      <div class="mt-2 p-2 bg-light rounded border">
+                          <strong id="library-name-delete" class="text-danger">«Название библиотеки»</strong>
+                      </div>
+                  </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <form id="deleteLibraryForm" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-danger">🗑 Удалить библиотеку</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ Modal для подтверждения выхода из библиотеки -->
+<div class="modal fade" id="leaveLibraryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-center">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title w-100">Подтверждение выхода из библиотеки</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-dark">
+              <div class="alert alert-warning py-2">
+                <div class="text-center fw-bold mb-1">Вы потеряете доступ ко всем книгам в этой библиотеке</div>
+                <div class="text-center">
+                  Вы действительно хотите выйти из библиотеки?
+                  <div class="mt-2 p-2 bg-light rounded border">
+                          <strong id="library-name-leave" class="text-dark">«Название библиотеки»</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <form id="leaveLibraryForm" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-warning">🚪 Выйти из библиотеки</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDeleteLibrary(libraryId, libraryName) {
+    document.getElementById('library-name-delete').textContent = libraryName;
+    document.getElementById('deleteLibraryForm').action = `/library/${libraryId}/delete`;
+
+    const modal = new bootstrap.Modal(document.getElementById('deleteLibraryModal'));
+    modal.show();
+}
+
+function confirmLeaveLibrary(libraryId, libraryName) {
+    document.getElementById('library-name-leave').textContent = libraryName;
+    document.getElementById('leaveLibraryForm').action = `/library/${libraryId}/leave`;
+
+    const modal = new bootstrap.Modal(document.getElementById('leaveLibraryModal'));
+    modal.show();
+}
+</script>
 {% endblock %}
