@@ -30,10 +30,10 @@ async def libraries_list(request: Request, db: DBType, current_user: CurrentUser
         "libraries/list.html",
         {
             "request": request,
+            "messages": get_flashed_messages(request),
             "libraries": libraries,
             "user": current_user,
             "title": "Мои библиотеки",
-            "messages": get_flashed_messages(request),
         },
     )
 
@@ -42,7 +42,12 @@ async def libraries_list(request: Request, db: DBType, current_user: CurrentUser
 async def create_library_page(request: Request, current_user: CurrentUser):
     """Страница создания библиотеки"""
     return templates.TemplateResponse(
-        "libraries/create.html", {"request": request, "user": current_user}
+        "libraries/create.html",
+        {
+            "request": request,
+            "messages": get_flashed_messages(request),
+            "user": current_user,
+        },
     )
 
 
@@ -66,7 +71,12 @@ async def create_library_submit(
     except Exception as e:
         return templates.TemplateResponse(
             "libraries/create.html",
-            {"request": request, "error": str(e), "user": current_user},
+            {
+                "request": request,
+                "messages": get_flashed_messages(request),
+                "error": str(e),
+                "user": current_user,
+            },
         )
 
 
@@ -79,7 +89,13 @@ async def search_libraries(
     libraries = await library_service.search_libraries_to_join(db, current_user.id, q)
     return templates.TemplateResponse(
         "libraries/search.html",
-        {"request": request, "libraries": libraries, "query": q, "user": current_user},
+        {
+            "request": request,
+            "messages": get_flashed_messages(request),
+            "libraries": libraries,
+            "query": q,
+            "user": current_user,
+        },
     )
 
 
@@ -105,7 +121,12 @@ async def join_library_page(
 
     return templates.TemplateResponse(
         "libraries/join.html",
-        {"request": request, "library": library, "user": current_user},
+        {
+            "request": request,
+            "messages": get_flashed_messages(request),
+            "library": library,
+            "user": current_user,
+        },
     )
 
 
@@ -181,6 +202,7 @@ async def library_detail(
             "libraries/detail.html",
             {
                 "request": request,
+                "messages": get_flashed_messages(request),
                 "library": library,
                 "books_with_status": books_with_status,
                 "user": current_user,

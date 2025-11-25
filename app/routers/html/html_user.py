@@ -30,7 +30,13 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 @router.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
     """HTML Страница регистрации"""
-    return templates.TemplateResponse("users/register.html", {"request": request})
+    return templates.TemplateResponse(
+        "users/register.html",
+        {
+            "request": request,
+            "messages": get_flashed_messages(request),
+        },
+    )
 
 
 @router.post("/register")
@@ -66,14 +72,26 @@ async def register_submit(
         logger.error(f"Registration error: {e}")
         return templates.TemplateResponse(
             "users/register.html",
-            {"request": request, "error": str(e), "username": username, "email": email},
+            {
+                "request": request,
+                "messages": get_flashed_messages(request),
+                "error": str(e),
+                "username": username,
+                "email": email,
+            },
         )
 
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     """HTML-страница входа"""
-    return templates.TemplateResponse("users/login.html", {"request": request})
+    return templates.TemplateResponse(
+        "users/login.html",
+        {
+            "request": request,
+            "messages": get_flashed_messages(request),
+        },
+    )
 
 
 @router.post("/login")
@@ -116,7 +134,8 @@ async def login_submit(
 async def profile_page(request: Request, user: CurrentUser):
     """Страница профиля"""
     return templates.TemplateResponse(
-        "users/info.html", {"request": request, "user": user}
+        "users/info.html",
+        {"request": request, "messages": get_flashed_messages(request), "user": user},
     )
 
 
@@ -136,6 +155,7 @@ async def my_books_page(request: Request, db: DBType, current_user: CurrentUser)
         "books/user_books.html",
         {
             "request": request,
+            "messages": get_flashed_messages(request),
             "books": books,
             "user": current_user,
             "title": "Мои книги",
@@ -147,7 +167,12 @@ async def my_books_page(request: Request, db: DBType, current_user: CurrentUser)
 async def edit_user_page(request: Request, db: DBType, current_user: CurrentUser):
     """Страница редактирования профиля"""
     return templates.TemplateResponse(
-        "users/edit.html", {"request": request, "user": current_user}
+        "users/edit.html",
+        {
+            "request": request,
+            "messages": get_flashed_messages(request),
+            "user": current_user,
+        },
     )
 
 
@@ -192,5 +217,10 @@ async def all_users_page(request: Request, db: DBType, current_user: CurrentUser
         return templates.TemplateResponse("errors/404.html", {"request": request})
     return templates.TemplateResponse(
         "users/list.html",
-        {"request": request, "users": users, "title": "Список пользователей"},
+        {
+            "request": request,
+            "messages": get_flashed_messages(request),
+            "users": users,
+            "title": "Список пользователей",
+        },
     )

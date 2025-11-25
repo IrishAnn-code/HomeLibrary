@@ -53,6 +53,7 @@ async def books_list(
             "request": request,
             "books_with_status": books_with_status,
             "user": current_user,
+            "messages": get_flashed_messages(request),
         },
     )
 
@@ -61,7 +62,8 @@ async def books_list(
 async def all_books_page(request: Request, db: DBType):
     books = await get_all_books(db)
     return templates.TemplateResponse(
-        "books/list.html", {"request": request, "books": books}
+        "books/list.html",
+        {"request": request, "messages": get_flashed_messages(request), "books": books},
     )
 
 
@@ -73,6 +75,7 @@ async def my_books(request: Request, db: DBType, current_user: CurrentUser):
         "books/user_books.html",
         {
             "request": request,
+            "messages": get_flashed_messages(request),
             "books_with_status": books_with_status,
             "user": current_user,
         },
@@ -90,6 +93,7 @@ async def create_book_page(request: Request, db: DBType, current_user: CurrentUs
         "books/create.html",
         {
             "request": request,
+            "messages": get_flashed_messages(request),
             "libraries": libraries,
             "popular_genres": popular_genres,
             "popular_authors": popular_authors,
@@ -131,7 +135,7 @@ async def create_book_submit(
             lib_address=library.name,
             room=room.capitalize(),
             shelf=shelf.capitalize(),
-            location=location
+            location=library.name,
         )
         book = await create_book(db, book_data, current_user.id, library_id)
         flash(request, "Книга успешно добавлена", "success")
@@ -143,6 +147,7 @@ async def create_book_submit(
             "books/create.html",
             {
                 "request": request,
+                "messages": get_flashed_messages(request),
                 "error": str(e),
                 "libraries": libraries,
                 "user": current_user,
@@ -160,6 +165,7 @@ async def search_books(
         "books/search_result.html",
         {
             "request": request,
+            "messages": get_flashed_messages(request),
             "available_books": available_books,
             "query": q,
             "user": current_user,
@@ -174,6 +180,7 @@ async def delete_index(request: Request):
         "books/delete.html",
         {
             "request": request,
+            "messages": get_flashed_messages(request),
             "title": "Удаление книги",
             "message": "Укажите ID задачи для удаления",
         },
@@ -230,6 +237,7 @@ async def edit_book_page(
         "books/edit.html",
         {
             "request": request,
+            "messages": get_flashed_messages(request),
             "book": book,
             "libraries": libraries,
             "popular_genres": popular_genres,
@@ -256,7 +264,7 @@ async def edit_book_submit(
     lib_address: str = Form(None),
     room: str = Form(None),
     shelf: str = Form(None),
-    location: str = Form(None)
+    location: str = Form(None),
 ):
     """Обработка редактирования книги"""
     try:
@@ -287,7 +295,10 @@ async def edit_book_submit(
         }
 
         update_data = BookUpdate(
-            **final_data, description=description, read_status=read_status, location=location
+            **final_data,
+            description=description,
+            read_status=read_status,
+            location=location,
         )
 
         logger.info(f"💾 Обновляемые данные: {update_data}")
@@ -322,6 +333,7 @@ async def book_detail(
         "books/info.html",
         {
             "request": request,
+            "messages": get_flashed_messages(request),
             "book": book,
             "user": user,
             "current_user": current_user,
