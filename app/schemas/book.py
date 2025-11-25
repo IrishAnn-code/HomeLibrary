@@ -13,6 +13,7 @@ class BookCreate(BaseModel):
     lib_address: str = Field(..., max_length=100)
     room: str = Field(..., max_length=100)
     shelf: str = Field(..., max_length=100)
+    location: str = Field(..., max_length=100)
 
 
 class BookUpdate(BookCreate):
@@ -32,6 +33,7 @@ class BookOut(BaseModel):
     lib_address: str
     room: str
     shelf: str
+    location: str
     slug: str
     library_id: int
     user_id: int

@@ -111,6 +111,7 @@ async def create_book_submit(
     read_status: str = Form(...),
     room: str = Form(None),
     shelf: str = Form(None),
+    location: str = Form(None),
     library_id: int = Form(...),
 ):
     """Обработка добавления книги"""
@@ -130,6 +131,7 @@ async def create_book_submit(
             lib_address=library.name,
             room=room.capitalize(),
             shelf=shelf.capitalize(),
+            location=location
         )
         book = await create_book(db, book_data, current_user.id, library_id)
         flash(request, "Книга успешно добавлена", "success")
@@ -254,6 +256,7 @@ async def edit_book_submit(
     lib_address: str = Form(None),
     room: str = Form(None),
     shelf: str = Form(None),
+    location: str = Form(None)
 ):
     """Обработка редактирования книги"""
     try:
@@ -284,7 +287,7 @@ async def edit_book_submit(
         }
 
         update_data = BookUpdate(
-            **final_data, description=description, read_status=read_status
+            **final_data, description=description, read_status=read_status, location=location
         )
 
         logger.info(f"💾 Обновляемые данные: {update_data}")

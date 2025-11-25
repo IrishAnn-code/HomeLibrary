@@ -19,6 +19,7 @@ class Book(Base):
     lib_address = Column(String)  # institut.13
     room = Column(String, nullable=True)  #  saloon
     shelf = Column(String, nullable=True)  # 3rd shelf
+    location = Column(String, nullable=True)
 
     slug = Column(String, unique=True, index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))

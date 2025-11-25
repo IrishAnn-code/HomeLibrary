@@ -55,6 +55,10 @@
                     <h5 class="card-title ms-2">Расположение</h5>
                     <table class="table table-responsive">
                         <tr>
+                            <td class="fw-bold">Где книга сейчас:</td>
+                            <td>{{ book.location or book.lib_address }}</td>
+                        </tr>
+                        <tr>
                             <td class="fw-bold" style="width: 40%;">Библиотека:</td>
                             <td>{{ book.lib_address }}</td>
                         </tr>

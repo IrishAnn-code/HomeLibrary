@@ -71,6 +71,7 @@ async def create_book(
             lib_address=data.lib_address,
             room=data.room,
             shelf=data.shelf,
+            location=data.location,
             user_id=user_id,
             library_id=library_id,
             slug=slug,
@@ -126,6 +127,7 @@ async def update_book(db: AsyncSession, user_id: int, book_id: int, data: BookUp
             lib_address=data.lib_address,
             room=data.room,
             shelf=data.shelf,
+            location=data.location
         )
     )
     read_status = await update_user_book_status(db, user_id, book_id, data.read_status)
@@ -152,6 +154,8 @@ async def update_book_with_permissions(
         # Обновляем описание (всегда доступно)
         if data.description is not None:
             book.description = data.description
+        if data.location is not None:
+            book.location = data.location
 
         # Обновляем защищенные поля (только при полном доступе)
         if has_full_access:
