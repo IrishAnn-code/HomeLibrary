@@ -127,7 +127,7 @@ async def update_book(db: AsyncSession, user_id: int, book_id: int, data: BookUp
             lib_address=data.lib_address,
             room=data.room,
             shelf=data.shelf,
-            location=data.location
+            location=data.location,
         )
     )
     read_status = await update_user_book_status(db, user_id, book_id, data.read_status)
@@ -152,8 +152,6 @@ async def update_book_with_permissions(
         has_full_access = permissions.get("can_edit_full", False)
 
         # Обновляем описание (всегда доступно)
-        if data.description is not None:
-            book.description = data.description
         if data.location is not None:
             book.location = data.location
 

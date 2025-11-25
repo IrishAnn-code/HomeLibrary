@@ -56,7 +56,7 @@
                     <table class="table table-responsive">
                         <tr>
                             <td class="fw-bold">Где книга сейчас:</td>
-                            <td>{{ book.location or book.lib_address }}</td>
+                            <td>{{ 'В библиотеке' if book.location == book.lib_address else (book.location if book.location else 'В библиотеке')  }}</td>
                         </tr>
                         <tr>
                             <td class="fw-bold" style="width: 40%;">Библиотека:</td>

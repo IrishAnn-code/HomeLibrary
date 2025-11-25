@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block crud_container %}
-<div class="row justify-content-center" xmlns="http://www.w3.org/1999/html">
+<div class="row justify-content-center">
   <div class="col-md-8">
     <div class="card">
       <div class="card-body">
@@ -11,7 +11,7 @@
         {% if not permissions.can_edit_full %}
         <div class="alert alert-info">
           <small>
-            🔒 Вы можете изменять только описание и статус чтения. <br>
+            🔒 Вы можете изменять только локацию и статус чтения. <br>
             Основные поля доступны только создателю книги или владельцу библиотеки.
           </small>
         </div>
@@ -50,12 +50,19 @@
             </div>
           </div>
 
-          <!-- Описание (доступно всем) -->
+          <!-- Описание (только для полного доступа) -->
           <div class="mb-3">
             <label class="form-label text-dark">Описание</label>
+            {% if permissions.can_edit_full %}
             <textarea name="description" class="form-control" rows="3"
                       placeholder="Добавьте описание книги...">{{ book.description or '' }}</textarea>
-            <small class="text-muted">Все участники могут редактировать описание</small>
+            {% else %}
+            <div class="form-control bg-light">
+              {{ book.description or 'Нет описания' }}
+              <input type="hidden" name="description" value="{{ book.description or '' }}">
+            </div>
+            <small class="text-muted">Только для чтения</small>
+            {% endif %}
           </div>
 
           <div class="row">
@@ -96,13 +103,23 @@
                   ✅ Прочитано
                 </option>
               </select>
-              <small class="text-muted">Все участники могут менять статус</small>
+              <small class="text-muted">Если книга прочитана - отметь 🍷</small>
             </div>
+          </div>
+
+          <div class="row">
+          <!-- Локация (доступна всем) -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label text-dark">Текущее местоположение*</label>
+            <input type="text" name="location" class="form-control"
+                   value="{{ book.location or 'В библиотеке' }}" required
+                   placeholder="Например: В библиотеке, Костя взял почитать...">
+            <small class="text-muted">Если книга сейчас у тебя - напиши об этом ✍️</small>
           </div>
 
           <!-- Библиотека (только для полного доступа) -->
           {% if permissions.can_edit_full %}
-          <div class="mb-3">
+          <div class="col-md-6 mb-3">
             <label class="form-label text-dark">Библиотека*</label>
             <select name="library_id" class="form-select" required>
               {% for lib in libraries %}
@@ -116,48 +133,32 @@
           {% else %}
           <input type="hidden" name="library_id" value="{{ book.library_id }}">
           {% endif %}
+          </div>
 
-          <!-- Расположение книги -->
+          <!-- Расположение книги в библиотеке (только для полного доступа) -->
+          {% if permissions.can_edit_full %}
           <div class="row">
             <div class="col-md-4 mb-3">
               <label class="form-label text-dark">Адрес</label>
-              {% if permissions.can_edit_full %}
               <input type="text" name="lib_address" class="form-control"
                      value="{{ book.lib_address or '' }}">
-              {% else %}
-              <div class="form-control bg-light">
-                {{ book.lib_address or 'Не указан' }}
-                <input type="hidden" name="lib_address" value="{{ book.lib_address or '' }}">
-              </div>
-              {% endif %}
             </div>
-
             <div class="col-md-4 mb-3">
               <label class="form-label text-dark">Комната</label>
-              {% if permissions.can_edit_full %}
               <input type="text" name="room" class="form-control"
                      value="{{ book.room or '' }}">
-              {% else %}
-              <div class="form-control bg-light">
-                {{ book.room or 'Не указана' }}
-                <input type="hidden" name="room" value="{{ book.room or '' }}">
-              </div>
-              {% endif %}
             </div>
-
             <div class="col-md-4 mb-3">
               <label class="form-label text-dark">Полка</label>
-              {% if permissions.can_edit_full %}
               <input type="text" name="shelf" class="form-control"
                      value="{{ book.shelf or '' }}">
-              {% else %}
-              <div class="form-control bg-light">
-                {{ book.shelf or 'Не указана' }}
-                <input type="hidden" name="shelf" value="{{ book.shelf or '' }}">
-              </div>
-              {% endif %}
             </div>
           </div>
+          {% else %}
+          <input type="hidden" name="lib_address" value="{{ book.lib_address or '' }}">
+          <input type="hidden" name="room" value="{{ book.room or '' }}">
+          <input type="hidden" name="shelf" value="{{ book.shelf or '' }}">
+          {% endif %}
 
           <!-- Цвет (только для полного доступа) -->
           <div class="mb-3">
@@ -180,7 +181,6 @@
               💾 Сохранить изменения
             </button>
             <a href="/book/{{ book.id }}" class="btn btn-secondary">Отмена</a>
-
           </div>
         </form>
       </div>
