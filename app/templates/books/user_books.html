@@ -10,15 +10,17 @@
     <div class="table-responsive rounded-3">
         <table class="table table-striped table-hover mb-0">
           <tr>
-          <th style="width: 17%;">Автор</th>
-          <th style="min-width: 100px;">Название</th>
-          <th style="width: 10%;">Жанр</th>
+          <th>№</th>
+          <th>Автор</th>
+          <th>Название</th>
+          <th>Жанр</th>
           <th>Описание</th>
           <th>Статус</th>
-          <th>Адрес</th>
+          <th>Библиотека</th>
           </tr>
           {% for item in books_with_status %}
           <tr>
+            <td>{{ loop.index }}</td>
             <td>{{ item.book.author }}</td>
             <td><a href="/book/{{ item.book.id }}">{{ item.book.title }}</a></td>
             <td>{{ item.book.genre }}</td>
@@ -41,20 +43,13 @@
 <!-- ✅ Карточки для мобильных (показаны только на мобильных) -->
 <div class="d-block d-md-none">
   {% for item in books_with_status %}
+  <a href="/book/{{ item.book.id }}" class="text-decoration-none">
   <div class="card mb-3">
-    <div class="card-body">
-      <h5 class="card-title">
-        <a href="/book/{{ item.book.id }}" class="text-decoration-none">
-          {{ item.book.title }}
-        </a>
-      </h5>
-      <p class="card-text mb-1">
-        <strong>Автор:</strong> {{ item.book.author }}
-      </p>
+    <div class="card-body text-dark">
+      <h5 class="card-title">{{ item.book.title }}</h5>
+      <p class="card-text mb-1"><strong>Автор:</strong> {{ item.book.author }}</p>
       {% if item.book.genre %}
-      <p class="card-text mb-1">
-        <strong>Жанр:</strong> {{ item.book.genre }}
-      </p>
+      <p class="card-text mb-1"><strong>Жанр:</strong> {{ item.book.genre }}</p>
       {% endif %}
       {% if item.book.description %}
       <p class="card-text mb-2">
@@ -62,14 +57,15 @@
         <small class="text-muted">{{ item.book.description|truncate(50) }}</small>
       </p>
       {% endif %}
-      <div class="d-flex justify-content-between align-items-center">
+      <p class="card-text mb-2">
         <span class="badge bg-{{ 'success' if item.read_status.value == 'read' else 'warning' if item.read_status.value == 'reading' else 'secondary' }}">
           {{ item.read_status.russian_name }}
         </span>
-        <small class="text-muted">{{ item.book.lib_address|default('Библиотека не указана', true) }}</small>
-      </div>
+      </p>
+      <small class="text-muted">ID: {{ item.book.id }} | Библиотека: {{ item.book.lib_address }}</small>
     </div>
   </div>
   {% endfor %}
+  </a>
 </div>
 {% endblock %}
