@@ -9,7 +9,7 @@
 
   <form method="post" action="/book/create">
     <div class="mb-3">
-      <label class="form-label">Автор книги:</label>
+      <label class="form-label">Автор книги:*</label>
       <input type="text" name="author" class="form-control"
          list="author-suggestions" required>
       <datalist id="author-suggestions">
@@ -19,7 +19,7 @@
       </datalist>
     </div>
     <div class="mb-3">
-      <label for="title" class="form-label">Название книги:</label>
+      <label for="title" class="form-label">Название книги:*</label>
       <input type="text" id="title" name="title" class="form-control" required>
     </div>
     <div class="mb-3">
@@ -51,7 +51,7 @@
     </div>
 
     <div class="mb-3">
-      <label for="library_id" class="form-label">Библиотека:</label>
+      <label for="library_id" class="form-label">Библиотека:*</label>
       <select id="library_id" name="library_id" class="form-select" required>
         <option value="">Выберите библиотеку</option>
         {% for library in libraries %}
