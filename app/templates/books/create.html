@@ -2,13 +2,14 @@
 {% block crud_container %}
 
 <div class="row justify-content-center">
-  <div class="col-12 col-md-8 col-lg-6 col-xl-100">
-<section class="container-sm mt-2 p-5 rounded shadow" style="background:#2b2b2b;color:white;">
-  <h2 class="text-center mb-4">Добавить новую книгу</h2>
+  <div class="col-md-8">
+  <div class="card">
+    <div class="card-body">
+    <h2 class="text-center card-title text-dark">Добавить новую книгу</h2>
 
   <form method="post" action="/book/create">
     <div class="mb-3">
-      <label class="form-label text-dark">Автор книги:</label>
+      <label class="form-label">Автор книги:</label>
       <input type="text" name="author" class="form-control"
          list="author-suggestions" required>
       <datalist id="author-suggestions">
@@ -27,7 +28,7 @@
     </div>
 
     <div class="mb-3">
-      <label class="form-label text-dark">Жанр</label>
+      <label class="form-label">Жанр</label>
       <input type="text" name="genre" class="form-control"
          list="genre-suggestions" placeholder="Введите жанр">
 
@@ -37,7 +38,7 @@
           <option value="{{ g.genre }}">{{ g.count }} книг</option>
         {% endfor %}
       </datalist>
-      <small class="text-muted">Начните вводить или выберите из списка</small>
+      <small class="text-secondary">Начните вводить или выберите из списка</small>
     </div>
 
     <div class="mb-3">
@@ -71,9 +72,12 @@
       <label for="color" class="form-label">Цвет обложки:</label>
       <input type="color" id="color" name="color" class="form-control" value="#3498db">
     </div>
-    <button type="submit" class="btn btn-success">Добавить книгу</button>
+    <div class="d-flex justify-content-center p-3">
+      <button type="submit" class="btn btn-success">Добавить книгу</button>
+    </div>
   </form>
-</section>
-      </div>
 </div>
+  </div>
+</div>
+  </div>
 {% endblock %}

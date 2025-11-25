@@ -129,4 +129,4 @@ app.include_router(html_library.router)
 # pip install -r requirements.txt
 
 
-#
+# uvicorn app.main:app --host 192.168.1.88 --port 8000

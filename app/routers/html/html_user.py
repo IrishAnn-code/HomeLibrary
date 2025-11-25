@@ -13,6 +13,7 @@ from app.database.db_depends import get_db
 from app.models import User
 from app.schemas.user import UserUpdate
 from app.services import user_service
+from app.services.user_service import update_user
 from app.utils.jwt import create_access_token
 from app.utils.flash import flash, get_flashed_messages
 
@@ -142,16 +143,36 @@ async def my_books_page(request: Request, db: DBType, current_user: CurrentUser)
     )
 
 
-@router.put("/update", response_class=HTMLResponse)
-async def edit_user(
-    request: Request, db: DBType, user_id: int, update_u: UserUpdate, password: str
-):
-    user = await user_service.update_user(db, user_id, password, update_u)
-    if user is None:
-        return templates.TemplateResponse("errors/404.html", {"request": request})
+@router.get("/edit", response_class=HTMLResponse)
+async def edit_user_page(request: Request, db: DBType, current_user: CurrentUser):
+    """Страница редактирования профиля"""
     return templates.TemplateResponse(
-        "users/info.html", {"request": request, "user": user}
+        "users/edit.html", {"request": request, "user": current_user}
     )
+
+
+@router.post("/edit", response_class=HTMLResponse)
+async def edit_user_submit(
+    request: Request,
+    db: DBType,
+    current_user: CurrentUser,
+    firstname: str = Form(None),
+    lastname: str = Form(None),
+    email: str = Form(None),
+    password: str = Form(None),
+    current_password: str = Form(...),
+):
+    user_update = UserUpdate(
+        firstname=firstname, lastname=lastname, email=email, password=password
+    )
+    user = await update_user(db, current_user.id, current_password, user_update)
+
+    if user:
+        flash(request, "Профиль успешно обновлен!", "success")
+        return RedirectResponse(url="/user/me", status_code=303)
+    else:
+        flash(request, "Ошибка при обновлении профиля", "error")
+        return RedirectResponse(url="/update", status_code=303)
 
 
 @router.delete("/delete", response_class=HTMLResponse)

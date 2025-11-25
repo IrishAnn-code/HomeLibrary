@@ -20,17 +20,17 @@
 
     <div class="row">
         <!-- Левый столбец -->
-        <div class="col-md-6">
+        <div class="col-12 col-md-6 mb-3">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Информация о книге</h5>
-                    <table class="table table-borderless">
+                    <h5 class="card-title ms-2">Информация о книге</h5>
+                    <table class="table table-responsive">
                         <tr>
                             <td class="fw-bold" style="width: 40%;">Статус прочтения:</td>
                             <td>{{ read_status }}</td>
                         </tr>
                         <tr>
-                            <td class="fw-bold">Жанр</td>:
+                            <td class="fw-bold">Жанр:</td>
                             <td>{{ book.genre }}</td>
                         </tr>
                         <tr>
@@ -49,17 +49,17 @@
         </div>
 
         <!-- Правый столбец -->
-        <div class="col-md-6">
+        <div class="col-12 col-md-6 mb-3">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Расположение</h5>
-                    <table class="table table-borderless">
+                    <h5 class="card-title ms-2">Расположение</h5>
+                    <table class="table table-responsive">
                         <tr>
                             <td class="fw-bold" style="width: 40%;">Библиотека:</td>
                             <td>{{ book.lib_address }}</td>
                         </tr>
                         <tr>
-                            <td class="fw-bold">Комната</td>:
+                            <td class="fw-bold">Комната:</td>
                             <td>{{ book.room or "Нет описания" }}</td>
                         </tr>
                         <tr>

@@ -3,13 +3,14 @@
 {% block crud_container %}
 <article class="card container fluid">
         <div class="card-body">
-            <h2>Ваш id:{{ user.id }}</h2>
-            <p><strong>Логин: </strong>{{ user.username }}</p>
+            <div class="d-flex justify-content-between">
+                <h3><strong>Логин: </strong>{{ user.username }}</h3>
+                <a href="/user/edit" class="btn btn-success">Изменить профиль</a>
+            </div>
             <p><strong>Имя: </strong>{{ user.firstname }}</p>
             <p><strong>Фамилия: </strong>{{ user.lastname }}</p>
-            <p><strong>Время регистрации: </strong>{{ user.created_at }}</p>
+            <p><strong>Дата регистрации: </strong>{{ user.created_at.strftime('%Y-%m-%d') }}</p>
 
-            <a href="/update">Изменить профиль</a>
         </div>
 </article>
 {% endblock %}

@@ -83,13 +83,16 @@
             <div class="col-md-6 mb-3">
               <label class="form-label text-dark">Статус чтения*</label>
               <select name="read_status" class="form-select" required>
-                <option value="not_read" {% if book.read_status == 'not_read' %}selected{% endif %}>
+                <option value="not_read"
+                        {{ 'selected' if current_read_status == 'not_read' else '' }}>
                   📚 Не прочитано
                 </option>
-                <option value="reading" {% if book.read_status == 'reading' %}selected{% endif %}>
+                <option value="reading"
+                        {{ 'selected' if current_read_status == 'reading' else '' }}>
                   📖 Читаю
                 </option>
-                <option value="read" {% if book.read_status == 'read' %}selected{% endif %}>
+                <option value="read"
+                        {{ 'selected' if current_read_status == 'read' else '' }}>
                   ✅ Прочитано
                 </option>
               </select>
@@ -172,49 +175,16 @@
             {% endif %}
           </div>
 
-          <div class="d-flex gap-2">
+          <div class="d-flex gap-2 justify-content-between">
             <button type="submit" class="btn btn-success">
               💾 Сохранить изменения
             </button>
-            <a href="/book/{{ book.id }}" class="btn btn-secondary">← Отмена</a>
+            <a href="/book/{{ book.id }}" class="btn btn-secondary">Отмена</a>
 
-            <!-- Кнопка удаления для имеющих права -->
-            {% if permissions.can_delete %}
-            <button type="button" class="btn btn-danger ms-auto"
-                    data-bs-toggle="modal" data-bs-target="#deleteModal">
-              🗑️ Удалить книгу
-            </button>
-            {% endif %}
           </div>
         </form>
       </div>
     </div>
   </div>
 </div>
-
-<!-- Модальное окно удаления -->
-{% if permissions.can_delete %}
-<div class="modal fade" id="deleteModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title text-dark">Подтверждение удаления</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body text-dark">
-        <p>Вы действительно хотите удалить книгу <strong>{{ book.title }}</strong>?</p>
-        <div class="alert alert-warning mt-2">
-          <small>Это действие нельзя отменить</small>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-        <form action="/book/{{ book.id }}/delete" method="post" class="display:inline;e">
-          <button type="submit" class="btn btn-danger">Удалить</button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-{% endif %}
 {% endblock %}

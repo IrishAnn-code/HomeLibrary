@@ -124,7 +124,7 @@ async def create_book_submit(
             author=author.title(),
             title=title.capitalize(),
             description=description,
-            genre=genre,
+            genre=genre.strip(),
             color=color,
             read_status=read_status,
             lib_address=library.name,
@@ -222,6 +222,7 @@ async def edit_book_page(
     libraries = await list_user_libraries(db, current_user.id)
     popular_genres = await get_popular_genres(db)
     popular_authors = await get_popular_authors(db)
+    read_status_value = await get_user_book_status(db, current_user.id, book_id)
 
     return templates.TemplateResponse(
         "books/edit.html",
@@ -233,6 +234,7 @@ async def edit_book_page(
             "popular_authors": popular_authors,
             "user": current_user,
             "permissions": permissions,
+            "current_read_status": read_status_value,
         },
     )
 

@@ -35,8 +35,8 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     """Схема для обновления пользователя"""
 
-    firstname: str | None = Field(None, min_length=2, max_length=50)
-    lastname: str | None = Field(None, min_length=2, max_length=50)
+    firstname: str | None = Field(None, max_length=50)
+    lastname: str | None = Field(None, max_length=50)
     email: EmailStr | None = None
     password: str | None = Field(None, min_length=8, max_length=50)
 
