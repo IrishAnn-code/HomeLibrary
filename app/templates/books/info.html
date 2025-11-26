@@ -2,7 +2,7 @@
 
 {% block crud_container %}
 <article class="card container fluid">
-    <div class="d-flex bd-highlight mb-3">
+    <div class="d-flex bd-highlight mb-0">
         <div class="me-auto p-3 bd-highlight fs-4">{{ book.author }}: {{ book.title }}</div>
 
             <div class="d-flex gap-2 align-items-center">
@@ -14,7 +14,6 @@
                 <button type="button" class="btn btn-outline-danger"
                     onclick="confirmDelete({{ book.id }}, '{{ book.title }}', '{{ book.author }}')">🗑</button>
                {% endif %}
-
             </div>
     </div>
 
@@ -22,9 +21,9 @@
         <!-- Левый столбец -->
         <div class="col-12 col-md-6 mb-3">
             <div class="card">
-                <div class="card-body">
+                <div class="card-body pb-0">
                     <h5 class="card-title ms-2">Информация о книге</h5>
-                    <table class="table table-responsive">
+                    <table class="table table-responsive mb-0">
                         <tr>
                             <td class="fw-bold" style="width: 40%;">Статус прочтения:</td>
                             <td>{{ read_status }}</td>
@@ -51,9 +50,9 @@
         <!-- Правый столбец -->
         <div class="col-12 col-md-6 mb-3">
             <div class="card">
-                <div class="card-body">
+                <div class="card-body pb-0">
                     <h5 class="card-title ms-2">Расположение</h5>
-                    <table class="table table-responsive">
+                    <table class="table table-responsive mb-0">
                         <tr>
                             <td class="fw-bold">Где книга сейчас:</td>
                             <td>{{ 'В библиотеке' if book.location == book.lib_address else (book.location if book.location else 'В библиотеке')  }}</td>
@@ -77,9 +76,7 @@
                     </table>
                 </div>
             </div>
-
         </div>
-
     </div>
     <br>
     <button type="button" class="btn btn-secondary" onclick="window.history.back()">
@@ -109,7 +106,7 @@
           </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"> Отмена</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
         <form id="deleteForm" method="post" style="display:inline;">
           <button type="submit" class="btn btn-danger">Удалить</button>
         </form>
