@@ -3,6 +3,7 @@ from app.models.book import Book
 from app.models.user_library import UserLibrary
 from app.models.library import Library
 from app.models.user_book_status import UserBookStatus
+from app.models.comments import Comments
 from app.database.db import Base
 
 from sqlalchemy.schema import CreateTable

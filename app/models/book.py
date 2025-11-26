@@ -38,3 +38,4 @@ class Book(Base):
     user_statuses = relationship(
         "UserBookStatus", back_populates="book", cascade="all, delete-orphan"
     )
+    comments_assoc = relationship("Comments", back_populates="book")

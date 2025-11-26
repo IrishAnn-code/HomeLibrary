@@ -26,6 +26,7 @@ class User(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
+    timezone = Column(String, default="Europe/Moscow")
 
     # Связи:
     # 1. Пользователь может быть участником нескольких библиотек
@@ -48,3 +49,6 @@ class User(Base):
 
     # 5. Даем доступ для статусов чтения
     book_read_statuses = relationship("UserBookStatus", back_populates="user")
+
+    # 6. Связь с комментариями
+    comments_assoc = relationship("Comments", back_populates="user")

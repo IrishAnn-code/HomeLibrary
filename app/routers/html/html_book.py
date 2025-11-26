@@ -7,7 +7,7 @@ from typing import Annotated
 
 from app.database.auth import get_current_user
 from app.database.db_depends import get_db
-from app.models import User, Library
+from app.models import User, Library, Comments
 from app.models.enum import ReadStatus
 from app.schemas.book import BookUpdate, BookCreate
 from app.services.book_service import (
@@ -24,12 +24,22 @@ from app.services.book_service import (
     search_available_books,
 )
 from app.services.book_status_service import get_user_book_status
+from app.services.comment_service import get_comments_by_book, create_comment, edit_comment, delete_comment
 from app.services.library_service import list_user_libraries
 from app.services.user_service import get_user_books_with_status
 from app.utils.flash import get_flashed_messages, flash
 
 router = APIRouter(prefix="/book", tags=["Books (HTML)"])
 templates = Jinja2Templates(directory="app/templates")
+
+from datetime import timezone, timedelta
+
+def utc_to_local(utc_dt, offset_hours=3):
+    """Конвертирует UTC время в московское время"""
+    return utc_dt.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=offset_hours)))
+
+# Добавьте фильтр
+templates.env.filters["utc_to_local"] = utc_to_local
 
 logger = logging.getLogger(__name__)
 
@@ -314,6 +324,70 @@ async def edit_book_submit(
         return RedirectResponse(url=f"/book/{book_id}/edit", status_code=303)
 
 
+@router.post("/{book_id}/comments")
+async def add_comment(
+    request: Request,
+    db: DBType,
+    book_id: int,
+    current_user: CurrentUser,
+    message: str = Form()
+    ):
+    """Добавить комментарий к книге"""
+    try:
+        book = await get_book_by_id(db, book_id)
+        if not book:
+            flash(request, "Книга не найдена", "error")
+            return RedirectResponse(url="/book/", status_code=303)
+
+        await create_comment(db, book_id, current_user.id, message)
+        flash(request, "Комментарий добавлен", "success")
+    except Exception as e:
+        flash(request, f"Ошибка: {str(e)}", "error")
+
+    return RedirectResponse(url=f"/book/{book_id}", status_code=303)
+
+
+@router.post("/comments/{comment_id}/edit")
+async def edit_comment_on_page(
+        request: Request,
+        db: DBType,
+        comment_id: int,
+        current_user: CurrentUser,
+        message: str = Form()
+):
+    """Редактировать комментарий"""
+    try:
+        await edit_comment(db, comment_id, current_user.id, message)
+        flash(request, "Комментарий обновлен", "success")
+    except HTTPException as e:
+        flash(request, f"Ошибка: {e.detail}", "error")
+    except Exception as e:
+        flash(request, f"Ошибка: {str(e)}", "error")
+
+    referer = request.headers.get("referer", "/")
+    return RedirectResponse(url=referer, status_code=303)
+
+
+@router.post("/comments/{comment_id}/delete")
+async def delete_comment_on_page(
+        request: Request,
+        db: DBType,
+        comment_id: int,
+        current_user: CurrentUser
+):
+    """Удалить комментарий"""
+    try:
+        await delete_comment(db, comment_id, current_user.id)
+        flash(request, "Комментарий удален", "success")
+    except HTTPException as e:
+        flash(request, f"Ошибка: {e.detail}", "error")
+    except Exception as e:
+        flash(request, f"Ошибка: {str(e)}", "error")
+
+    referer = request.headers.get("referer", "/")
+    return RedirectResponse(url=referer, status_code=303)
+
+
 @router.get("/{book_id}", response_class=HTMLResponse)
 async def book_detail(
     request: Request, db: DBType, book_id: int, current_user: CurrentUser
@@ -328,6 +402,7 @@ async def book_detail(
     read_status = ReadStatus(await get_user_book_status(db, current_user.id, book_id))
 
     permissions = await get_book_permission(db, current_user.id, book_id)
+    comments = await get_comments_by_book(db, book_id)
 
     return templates.TemplateResponse(
         "books/info.html",
@@ -339,5 +414,6 @@ async def book_detail(
             "current_user": current_user,
             "read_status": read_status.russian_name,
             "permissions": permissions,
+            "comments": comments
         },
     )

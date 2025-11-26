@@ -78,11 +78,116 @@
             </div>
         </div>
     </div>
+    <!-- Блок комментариев -->
+
+<div class="mt-4">
+    <div class="card-body">
+        <h5 class="card-title">💬 Отзывы о книге ({{ comments|length }})</h5>
+
+        <!-- Форма добавления комментария -->
+        <form action="/book/{{ book.id }}/comments" method="post" class="mb-4">
+            <div class="input-group">
+                <textarea name="message" class="form-control" placeholder="Напишите отзыв..."
+                         rows="2" required></textarea>
+                <button type="submit" class="btn btn-success">Отправить</button>
+            </div>
+        </form>
+
+        <!-- Список комментариев -->
+        <div class="comments-list">
+            {% for comment in comments %}
+            <div class="card mb-2 {% if comment.user_id == current_user.id %}border-black-50{% endif %}">
+                <div class="card-body py-0">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <strong class="text-dark">{{ comment.user.username }}</strong>
+                            <small class="text-muted ms-2"> {{ (comment.created_at|utc_to_local).strftime('%d.%m.%Y %H:%M') }} </small>
+                            <p class="mb-0 mt-1">{{ comment.message }}</p>
+                        </div>
+
+                        <!-- Кнопки управления (только для своих комментариев) -->
+                        {% if comment.user_id == current_user.id %}
+                        <div class="btn-group btn-group-sm ms-2">
+                            <!-- Кнопка редактирования -->
+                            <button type="button" class="btn btn-outline-warning btn-sm"
+                                    data-bs-toggle="modal" data-bs-target="#editCommentModal"
+                                    onclick="setEditComment({{ comment.id }}, `{{ comment.message | replace('`', '\\`') }}`)">
+                                ✏️
+                            </button>
+                            <!-- Кнопка удаления -->
+                            <button type="button" class="btn btn-outline-danger btn-sm"
+                                    data-bs-toggle="modal" data-bs-target="#deleteCommentModal"
+                                    onclick="setDeleteComment({{ comment.id }})">
+                                🗑
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center text-muted py-3">
+                Пока нет комментариев. Будьте первым!
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования комментария -->
+<div class="modal fade" id="editCommentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать комментарий</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editCommentForm" method="post">
+                <div class="modal-body">
+                    <textarea name="message" class="form-control" rows="3" required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-warning">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно удаления комментария -->
+<div class="modal fade" id="deleteCommentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Удалить комментарий</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить этот комментарий?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <form id="deleteCommentForm" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-danger">Удалить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
     <br>
-    <button type="button" class="btn btn-secondary" onclick="window.history.back()">
-    Назад
-    </button>
-    <br>
+
+<script>
+function setEditComment(commentId, currentText) {
+    document.getElementById('editCommentForm').action = `/book/comments/${commentId}/edit`;
+    document.querySelector('#editCommentForm textarea[name="message"]').value = currentText;
+}
+
+function setDeleteComment(commentId) {
+    document.getElementById('deleteCommentForm').action = `/book/comments/${commentId}/delete`;
+}
+</script>
+
 </article>
 
 <!-- ✅ Modal для подтверждения -->
