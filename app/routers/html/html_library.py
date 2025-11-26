@@ -150,6 +150,49 @@ async def join_library_submit(
         return RedirectResponse(url=f"/library/{library_id}/join", status_code=303)
 
 
+@router.get("/{library_id}/edit", response_class=HTMLResponse)
+async def edit_library_page(request: Request, db: DBType, library_id: int, current_user: CurrentUser):
+    """Страница редактирования библиотеки"""
+    library = await library_service.get_library(db, library_id)
+    if not library:
+        flash(request, "Библиотека не найдена", "error")
+        return RedirectResponse(url="/library/", status_code=303)
+
+    owner_username = await library_service.get_username_by_lib_id(db, library_id)
+    if not owner_username:
+        flash(request, "Владелец библиотеки не найден", "error")
+
+    return templates.TemplateResponse(
+        "libraries/edit.html",
+        {
+            "request": request,
+            "messages": get_flashed_messages(request),
+            "library": library,
+            "user": current_user,
+            "owner_username": owner_username,
+        }
+    )
+
+
+@router.post("/{library_id}/edit")
+async def edit_library_submit(
+        request: Request,
+        db: DBType,
+        library_id: int,
+        current_user: CurrentUser,
+        new_name: str = Form()
+):
+    """Обработка редактирования библиотеки"""
+    try:
+        edit_library_name = await library_service.update_name(db, new_name, library_id, current_user.id)
+        logger.info(f"ℹ️ Успешно: {edit_library_name}")
+        flash(request, "Название библиотеки обновлено", "success")
+        return RedirectResponse(url=f"/library/{library_id}", status_code=303)
+    except Exception as e:
+        flash(request, f"Ошибка: {str(e)}", "error")
+        return RedirectResponse(url=f"/library/{library_id}/edit", status_code=303)
+
+
 @router.post("/{library_id}/leave")
 async def library_leave_submit(
     request: Request, db: DBType, library_id: int, current_user: CurrentUser

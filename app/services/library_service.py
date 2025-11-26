@@ -3,7 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, func
 import logging
 
-from app.models import Book, Library, UserLibrary
+from app.models import Book, Library, UserLibrary, User
+from app.models.enum import LibraryRole
 from app.services.book_status_service import add_read_status_to_book
 from app.utils.hashing import hash_password, verify_password
 from app.utils.helpers import make_slug
@@ -36,6 +37,20 @@ async def list_user_libraries(db: AsyncSession, user_id: int):
     return result.scalars().all()
 
 
+async def get_username_by_lib_id(db: AsyncSession, library_id: int):
+    """Получить username владельца библиотеки, по id библиотеки"""
+    result = await db.scalar(
+        select(User)
+        .join(UserLibrary, UserLibrary.user_id == User.id)
+        .where(
+            (UserLibrary.library_id == library_id) &
+            (UserLibrary.role == LibraryRole.OWNER)
+        )
+    )
+    owner_username = result.username
+    return owner_username
+
+
 async def is_library_member(db: AsyncSession, user_id: int, library_id: int):
     """Является ли пользователь участником библиотеки"""
     logger.info(f"🔍 Checking membership: user_id={user_id}, library_id={library_id}")
@@ -50,10 +65,6 @@ async def is_library_member(db: AsyncSession, user_id: int, library_id: int):
 async def all_books_in_lib(db: AsyncSession, lib_id: int):
     """
     Все книги в одной библиотеке
-    db: База данных
-    lib_id: id библиотеки
-    user_id: необязательный аргумент, введен, чтобы другие функции не падали
-
     return: Список книг
     """
     books = await db.scalars(select(Book).where(Book.library_id == lib_id))
@@ -158,6 +169,10 @@ async def update_name(db: AsyncSession, new_name: str, lib_id: int, user_id: int
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Library not found"
         )
+
+    if user_id != library.owner_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Нет доступа к библиотеке")
 
     await db.execute(update(Library).where(Library.id == lib_id).values(name=new_name))
     await db.commit()
