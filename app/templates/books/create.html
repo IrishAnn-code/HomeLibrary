@@ -9,69 +9,126 @@
 
   <form method="post" action="/book/create">
     <div class="mb-3">
-      <label class="form-label">Автор книги:*</label>
-      <input type="text" name="author" class="form-control"
-         list="author-suggestions" required>
-      <datalist id="author-suggestions">
-        {% for a in popular_authors %}
-          <option value="{{ a.author }}">{{ a.count }} книг</option>
+      <label for="author" class="form-label">Автор <span class="text-danger">*</span></label>
+      <input
+              type="text"
+              class="form-control"
+              id="author"
+              name="author"
+              list="authors-list"
+              placeholder="Начните вводить имя автора..."
+              required
+              autocomplete="off"
+      >
+      <datalist id="authors-list">
+        {% for author in popular_authors %}
+        <option value="{{ author.author }}">
         {% endfor %}
       </datalist>
-    </div>
-    <div class="mb-3">
-      <label for="title" class="form-label">Название книги:*</label>
-      <input type="text" id="title" name="title" class="form-control" required>
-    </div>
-    <div class="mb-3">
-      <label for="description" class="form-label">Описание:</label>
-      <textarea id="description" name="description" class="form-control"></textarea>
+      <small class="form-text text-muted">Начните вводить - появятся подсказки. Или введите нового автора.</small>
     </div>
 
     <div class="mb-3">
-      <label class="form-label">Жанр</label>
-      <input type="text" name="genre" class="form-control"
-         list="genre-suggestions" placeholder="Введите жанр">
+      <label for="title" class="form-label">Название: <span class="text-danger">*</span></label>
+      <input
+              type="text"
+              class="form-control"
+              id="title"
+              name="title"
+              placeholder="Название книги"
+              required
+      >
+    </div>
 
-      <!-- ✅ Datalist с популярными жанрами -->
-      <datalist id="genre-suggestions">
-        {% for g in popular_genres %}
-          <option value="{{ g.genre }}">{{ g.count }} книг</option>
+    <div class="mb-3">
+      <label for="genre" class="form-label">Жанр</label>
+      <input
+              type="text"
+              class="form-control"
+              id="genre"
+              name="genre"
+              list="genres-list"
+              placeholder="Выберите или введите жанр"
+              autocomplete="off"
+      >
+      <datalist id="genres-list">
+        {% for genres in popular_genres %}
+          <option value="{{ genres.genre }}"></option>
         {% endfor %}
       </datalist>
       <small class="text-secondary">Начните вводить или выберите из списка</small>
     </div>
 
     <div class="mb-3">
-      <label for="read_status" class="form-label">Статус:</label>
-      <select id="read_status" name="read_status" class="form-select" required>
-        <option value="not_read">Не прочитано</option>
-        <option value="reading">Читаю</option>
-        <option value="read">Прочитано</option>
-      </select>
+      <label for="description" class="form-label">Описание:</label>
+      <textarea
+              class="form-control"
+              id="description"
+              name="description"
+              rows="2"
+              placeholder="Краткое описание книги (необязательно)"
+      ></textarea>
     </div>
 
     <div class="mb-3">
-      <label for="library_id" class="form-label">Библиотека:*</label>
-      <select id="library_id" name="library_id" class="form-select" required>
-        <option value="">Выберите библиотеку</option>
+      <label for="color" class="form-label">Цвет обложки:</label>
+      <div class="d-flex gap-2 align-items-center">
+        <input
+                type="color"
+                class="form-control form-control-color"
+                id="color"
+                name="color"
+                value="#8fbc8f"
+                style="width: 70px;"
+        >
+        <input
+                type="text"
+                class="form-control"
+                id="color-hex"
+                value="#8fbc8f"
+                readonly
+                style="width: 100px;"
+        >
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="library_id" class="form-label">Библиотека: <span class="text-danger">*</span></label>
+      <select class="form-select" id="library_id" name="library_id" required>
+        <option value="" selected disabled>Выберите библиотеку</option>
         {% for library in libraries %}
         <option value="{{ library.id }}">{{ library.name }}</option>
         {% endfor %}
       </select>
+      <small class="form-text text-muted">
+        Нет подходящей? <a href="/library/create" class="link-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">
+        Создать новую библиотеку</a>
+      </small>
     </div>
 
     <div class="mb-3">
-      <label for="room" class="form-label">Комната:</label>
-      <input type="text" id="room" name="room" class="form-control" placeholder="Например: Гостиная">
+      <label for="read_status" class="form-label">Статус:</label>
+      <select class="form-select" id="read_status" name="read_status" required>
+        <option value="not_read">📖 Не прочитана</option>
+        <option value="reading">📚 Читаю</option>
+        <option value="read">✅ Прочитана</option>
+      </select>
     </div>
-    <div class="mb-3">
-      <label for="shelf" class="form-label">Полка:</label>
-      <input type="text" id="shelf" name="shelf" class="form-control" placeholder="Например: Верхняя полка">
+
+    <div class="card mb-3 bg-light">
+      <div class="card-body">
+        <h6 class="card-title">📍 Где находится книга?</h6>
+        <div class="mb-3">
+          <label for="room" class="form-label">Комната:</label>
+          <input type="text" class="form-control" id="room" name="room" placeholder="Например: Гостиная">
+        </div>
+        <div class="mb-3">
+          <label for="shelf" class="form-label">Полка:</label>
+          <input type="text" class="form-control" id="shelf" name="shelf" placeholder="Например: Верхняя полка">
+        </div>
+      </div>
     </div>
-    <div class="mb-3">
-      <label for="color" class="form-label">Цвет обложки:</label>
-      <input type="color" id="color" name="color" class="form-control" value="#3498db">
-    </div>
+
     <div class="d-flex justify-content-center p-3">
       <button type="submit" class="btn btn-success">Добавить книгу</button>
     </div>
