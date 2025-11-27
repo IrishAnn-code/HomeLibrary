@@ -40,7 +40,7 @@ class Library(Base):
         "User",
         secondary="user_library",
         back_populates="libraries",
-        overlaps="users_assoc,libraries_assoc",
+        viewonly=True
     )
 
     @property

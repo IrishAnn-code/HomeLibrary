@@ -32,13 +32,18 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
     description="Create a new user account with username, email and password",
 )
 @limiter.limit("3/hours")
-async def register_user(request: Request, db: DBType, data: UserCreate):
+async def register_user(
+        request: Request, db: DBType, data: UserCreate):
     """
     Зарегистрировать нового пользователя.
-
     - **username**: Уникальное имя пользователя (5-15 символов)
     - **email**: Email адрес
     - **password**: Пароль (минимум 8 символов)
+
+    Возвращает:
+    - **200**: Пользователь успешно создан
+    - **409**: Пользователь с таким username или email уже существует
+    - **422**: Ошибка валидации данных
     """
     # Сервис выбросит HTTPException если ошибка → FastAPI автоматически вернет JSON
     user = await create_user(db, data.username, data.email, data.password)

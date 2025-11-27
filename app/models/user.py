@@ -1,5 +1,5 @@
 from app.database.db import Base
-from sqlalchemy import Column, String, Integer, UniqueConstraint, DateTime
+from sqlalchemy import Column, String, Integer, UniqueConstraint, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 
@@ -14,12 +14,12 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, nullable=False, index=True)
-    email = Column(String, unique=True, nullable=True)
+    email = Column(String, unique=True, nullable=True, index=True)
     password_hash = Column(String, nullable=False)
     tg_id = Column(Integer, nullable=True)
     firstname = Column(String, nullable=True)
     lastname = Column(String, nullable=True)
-    slug = Column(String, unique=True, nullable=True)
+    slug = Column(String, unique=True, nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
     updated_at = Column(
         DateTime(timezone=True),
@@ -27,6 +27,7 @@ class User(Base):
         onupdate=lambda: datetime.now(timezone.utc),
     )
     timezone = Column(String, default="Europe/Moscow")
+    is_admin = Column(Boolean, default=False)
 
     # Связи:
     # 1. Пользователь может быть участником нескольких библиотек
