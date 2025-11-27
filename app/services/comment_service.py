@@ -10,6 +10,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 async def create_comment(db: AsyncSession, book_id: int, user_id: int, message: str):
     """Сохранение комментария в БД"""
     comment = Comments(book_id=book_id, user_id=user_id, message=message)
@@ -19,7 +20,9 @@ async def create_comment(db: AsyncSession, book_id: int, user_id: int, message: 
     return comment
 
 
-async def get_comments_by_book(db: AsyncSession, book_id: int, skip: int = 0, limit: int = 50):
+async def get_comments_by_book(
+    db: AsyncSession, book_id: int, skip: int = 0, limit: int = 50
+):
     """Получить все комментарии по книге"""
     try:
         comments = await db.scalars(
@@ -33,24 +36,25 @@ async def get_comments_by_book(db: AsyncSession, book_id: int, skip: int = 0, li
         return list(comments)
     except Exception as e:
         logger.error(f"Ошибка получения комментариев: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail="Ошибка при загрузке комментариев")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка при загрузке комментариев",
+        )
 
 
-async def edit_comment(
-        db: AsyncSession,
-        comment_id: int,
-        user_id: int,
-        message: str
-):
+async def edit_comment(db: AsyncSession, comment_id: int, user_id: int, message: str):
     """Редактировать комментарий"""
     try:
         comment = await db.get(Comments, comment_id)
         if not comment:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Комментарий не найден")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Комментарий не найден"
+            )
 
         if comment.user_id != user_id:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Недостаточно прав")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Недостаточно прав"
+            )
 
         comment.message = message
         await db.commit()
@@ -60,14 +64,13 @@ async def edit_comment(
         raise
     except Exception as e:
         logger.error(f"Ошибка редактирования комментария: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Ошибка при загрузке комментариев")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка при загрузке комментариев",
+        )
 
 
-async def delete_comment(
-        db: AsyncSession,
-        comment_id: int,
-        user_id: int
-):
+async def delete_comment(db: AsyncSession, comment_id: int, user_id: int):
     """Удалить комментарий"""
     try:
         comment = await db.get(Comments, comment_id)
@@ -85,7 +88,7 @@ async def delete_comment(
         raise
     except Exception as e:
         logger.error(f"Ошибка удаления комментария: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Ошибка при удалении")
-
-
-
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка при удалении",
+        )

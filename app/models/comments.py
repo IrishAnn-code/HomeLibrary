@@ -4,15 +4,15 @@ from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 
 
-
 # ---------- Comments ---------- #
 class Comments(Base):
     __tablename__ = "comments"
     __table_args__ = (
-        Index('ix_comments_book_id', 'book_id'),
-        Index('ix_comments_user_id', 'user_id'),
-        Index('ix_comments_created_at', 'created_at'),
-        {"extend_existing": True, "sqlite_autoincrement": True})
+        Index("ix_comments_book_id", "book_id"),
+        Index("ix_comments_user_id", "user_id"),
+        Index("ix_comments_created_at", "created_at"),
+        {"extend_existing": True, "sqlite_autoincrement": True},
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     message = Column(String)

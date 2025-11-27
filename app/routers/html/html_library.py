@@ -151,7 +151,9 @@ async def join_library_submit(
 
 
 @router.get("/{library_id}/edit", response_class=HTMLResponse)
-async def edit_library_page(request: Request, db: DBType, library_id: int, current_user: CurrentUser):
+async def edit_library_page(
+    request: Request, db: DBType, library_id: int, current_user: CurrentUser
+):
     """Страница редактирования библиотеки"""
     library = await library_service.get_library(db, library_id)
     if not library:
@@ -170,21 +172,23 @@ async def edit_library_page(request: Request, db: DBType, library_id: int, curre
             "library": library,
             "user": current_user,
             "owner_username": owner_username,
-        }
+        },
     )
 
 
 @router.post("/{library_id}/edit")
 async def edit_library_submit(
-        request: Request,
-        db: DBType,
-        library_id: int,
-        current_user: CurrentUser,
-        new_name: str = Form()
+    request: Request,
+    db: DBType,
+    library_id: int,
+    current_user: CurrentUser,
+    new_name: str = Form(),
 ):
     """Обработка редактирования библиотеки"""
     try:
-        edit_library_name = await library_service.update_name(db, new_name, library_id, current_user.id)
+        edit_library_name = await library_service.update_name(
+            db, new_name, library_id, current_user.id
+        )
         logger.info(f"ℹ️ Успешно: {edit_library_name}")
         flash(request, "Название библиотеки обновлено", "success")
         return RedirectResponse(url=f"/library/{library_id}", status_code=303)

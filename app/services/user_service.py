@@ -179,9 +179,11 @@ async def get_user_books(
     return books.all()
 
 
-async def get_user_books_with_status(db: AsyncSession, user_id: int):
+async def get_user_books_with_status(
+    db: AsyncSession, user_id: int, skip: int = 0, limit: int = 100
+):
     """Получить книги добавленные пользователем со статусами чтения"""
-    books = await get_user_books(db, user_id)
+    books = await get_user_books(db, user_id, skip, limit)
     books_with_status = await add_read_status_to_book(db, user_id, books)
     return books_with_status
 

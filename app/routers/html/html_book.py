@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends, Form, HTTPException
+from fastapi import APIRouter, Request, Depends, Form, HTTPException, Query
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,7 +9,7 @@ from app.database.auth import get_current_user
 from app.database.db_depends import get_db
 from app.models import User, Library, Comments
 from app.models.enum import ReadStatus
-from app.schemas.book import BookUpdate, BookCreate
+from app.schemas.book import BookUpdate, BookCreate, BookOut
 from app.services.book_service import (
     get_all_books,
     get_book_by_id,
@@ -24,7 +24,12 @@ from app.services.book_service import (
     search_available_books,
 )
 from app.services.book_status_service import get_user_book_status
-from app.services.comment_service import get_comments_by_book, create_comment, edit_comment, delete_comment
+from app.services.comment_service import (
+    get_comments_by_book,
+    create_comment,
+    edit_comment,
+    delete_comment,
+)
 from app.services.library_service import list_user_libraries
 from app.services.user_service import get_user_books_with_status
 from app.utils.flash import get_flashed_messages, flash
@@ -34,9 +39,13 @@ templates = Jinja2Templates(directory="app/templates")
 
 from datetime import timezone, timedelta
 
+
 def utc_to_local(utc_dt, offset_hours=3):
     """Конвертирует UTC время в московское время"""
-    return utc_dt.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=offset_hours)))
+    return utc_dt.replace(tzinfo=timezone.utc).astimezone(
+        timezone(timedelta(hours=offset_hours))
+    )
+
 
 # Добавьте фильтр
 templates.env.filters["utc_to_local"] = utc_to_local
@@ -77,10 +86,18 @@ async def all_books_page(request: Request, db: DBType):
     )
 
 
-@router.get("/my", response_class=HTMLResponse)
-async def my_books(request: Request, db: DBType, current_user: CurrentUser):
-    """Мои книги"""
-    books_with_status = await get_user_books_with_status(db, current_user.id)
+@router.get("/my", response_model=list[BookOut])
+async def get_my_books(
+    request: Request,
+    db: DBType,
+    current_user: CurrentUser,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, le=1000),
+):
+    """Получить список книг текущего пользователя."""
+    books_with_status = await get_user_books_with_status(
+        db, current_user.id, skip, limit
+    )
     return templates.TemplateResponse(
         "books/user_books.html",
         {
@@ -330,8 +347,8 @@ async def add_comment(
     db: DBType,
     book_id: int,
     current_user: CurrentUser,
-    message: str = Form()
-    ):
+    message: str = Form(),
+):
     """Добавить комментарий к книге"""
     try:
         book = await get_book_by_id(db, book_id)
@@ -349,11 +366,11 @@ async def add_comment(
 
 @router.post("/comments/{comment_id}/edit")
 async def edit_comment_on_page(
-        request: Request,
-        db: DBType,
-        comment_id: int,
-        current_user: CurrentUser,
-        message: str = Form()
+    request: Request,
+    db: DBType,
+    comment_id: int,
+    current_user: CurrentUser,
+    message: str = Form(),
 ):
     """Редактировать комментарий"""
     try:
@@ -370,10 +387,7 @@ async def edit_comment_on_page(
 
 @router.post("/comments/{comment_id}/delete")
 async def delete_comment_on_page(
-        request: Request,
-        db: DBType,
-        comment_id: int,
-        current_user: CurrentUser
+    request: Request, db: DBType, comment_id: int, current_user: CurrentUser
 ):
     """Удалить комментарий"""
     try:
@@ -414,6 +428,6 @@ async def book_detail(
             "current_user": current_user,
             "read_status": read_status.russian_name,
             "permissions": permissions,
-            "comments": comments
+            "comments": comments,
         },
     )

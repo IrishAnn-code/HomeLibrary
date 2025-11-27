@@ -43,8 +43,8 @@ async def get_username_by_lib_id(db: AsyncSession, library_id: int):
         select(User)
         .join(UserLibrary, UserLibrary.user_id == User.id)
         .where(
-            (UserLibrary.library_id == library_id) &
-            (UserLibrary.role == LibraryRole.OWNER)
+            (UserLibrary.library_id == library_id)
+            & (UserLibrary.role == LibraryRole.OWNER)
         )
     )
     owner_username = result.username
@@ -172,9 +172,12 @@ async def update_name(db: AsyncSession, new_name: str, lib_id: int, user_id: int
 
     if user_id != library.owner_id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Нет доступа к библиотеке")
+            status_code=status.HTTP_403_FORBIDDEN, detail="Нет доступа к библиотеке"
+        )
 
-    await db.execute(update(Library).where(Library.id == lib_id).values(name=new_name))
+    await db.execute(
+        update(Library).where(Library.id == lib_id).values(name=new_name.strip())
+    )
     await db.commit()
     return True
 
