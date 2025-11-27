@@ -60,7 +60,7 @@ async def register_submit(
             value=token,
             httponly=True,
             secure=not settings.DEBUG,  # False для dev, True для prod
-            samesite="lax",
+            samesite="strict",
             max_age=7 * 24 * 3600,
             path="/",
         )
@@ -118,7 +118,7 @@ async def login_submit(
         value=token,
         httponly=True,
         secure=not settings.DEBUG,  # ✅ True Только HTTPS (в production обязательно!), False для localhost
-        samesite="lax",  # ✅ Защита от CSRF
+        samesite="strict",  # ✅ Защита от CSRF
         max_age=7 * 24 * 3600,
         # domain=None,  # Текущий домен
         path="/",

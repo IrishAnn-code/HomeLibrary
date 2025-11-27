@@ -1,14 +1,17 @@
 from datetime import datetime, timezone
 
 from app.database.db import Base
-from sqlalchemy import Column, String, Integer, ForeignKey, DateTime
+from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, Index
 from sqlalchemy.orm import relationship
 
 
 # ---------- Book ---------- #
 class Book(Base):
     __tablename__ = "book"
-    __table_args__ = {"extend_existing": True, "sqlite_autoincrement": True}
+    __table_args__ = (
+        Index("idx_book_location", "id", "lib_address", "room", "shelf"),
+        {"extend_existing": True, "sqlite_autoincrement": True},
+    )
     id = Column(Integer, primary_key=True, index=True)
     author = Column(String)
     title = Column(String)

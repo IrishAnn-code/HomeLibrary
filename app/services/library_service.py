@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, func
 import logging
@@ -96,7 +97,7 @@ async def create_library(
     if not name:
         raise HTTPException(status_code=400, detail="Library name cannot be empty")
     try:
-        slug = make_slug(name)
+        slug = make_slug(name, unique=True)
         hashed = hash_password(password) if password else None
 
         lib = Library(name=name, password_hash=hashed, slug=slug, owner_id=owner_id)
@@ -115,6 +116,9 @@ async def create_library(
     except Exception as e:
         await db.rollback()
         raise
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(409, "Библиотека с таким именем уже существует")
 
 
 async def join_library(
@@ -125,7 +129,11 @@ async def join_library(
     if isinstance(lib_id_or_name, int) or (
         isinstance(lib_id_or_name, str) and str(lib_id_or_name).isdigit()
     ):
-        lib = await db.get(Library, int(lib_id_or_name))
+        lib = await db.scalar(
+            select(Library).where(
+                (Library.id == int(lib_id_or_name)) | (Library.name == lib_id_or_name)
+            )
+        )
 
     if not lib:
         lib = await db.scalar(select(Library).where(Library.name == lib_id_or_name))
