@@ -47,6 +47,11 @@ class Settings(BaseSettings):
         extra="ignore",  # Игнорировать лишние переменные
     )
 
+    # Rate limiting
+    RATE_LIMIT_PER_MINUTE: str = Field(default="100/minute")
+    RATE_LIMIT_PER_HOUR: str = Field(default="1000/hour")
+    RATE_LIMIT_ENABLED: bool = Field(default=True)
+
 
 # Создаем singleton
 settings = Settings()

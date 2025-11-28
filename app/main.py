@@ -28,8 +28,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ✅ Rate limiter
-limiter = Limiter(key_func=get_remote_address, default_limits=["200/day", "50/hour"])
 
 tags_metadata = [
     {"name": "default", "description": "Приветствие на главной странице"},
@@ -67,17 +65,23 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory="app/static", html=True), name="static")
 
 
-# ✅ Привязываем limiter к app
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+# ✅ Rate limiter
+if settings.RATE_LIMIT_ENABLED:
+    limiter = Limiter(
+        key_func=get_remote_address,
+        default_limits=[settings.RATE_LIMIT_PER_MINUTE, settings.RATE_LIMIT_PER_HOUR],
+    )
+    # ✅ Привязываем limiter к app
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    # ✅ Добавляем SlowAPI middleware
+    app.add_middleware(SlowAPIMiddleware)
 
 # Flash messages
 app.add_middleware(
     SessionMiddleware, secret_key=settings.SECRET_KEY, max_age=7 * 24 * 3600  # 7 дней
 )
-
-# ✅ Добавляем SlowAPI middleware
-app.add_middleware(SlowAPIMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
