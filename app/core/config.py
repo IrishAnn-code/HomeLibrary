@@ -52,6 +52,11 @@ class Settings(BaseSettings):
     RATE_LIMIT_PER_HOUR: str = Field(default="1000/hour")
     RATE_LIMIT_ENABLED: bool = Field(default=True)
 
+    USE_SECURE_COOKIES: bool = Field(
+        default=False,  # False для dev, True для production
+        description="Использовать secure cookies (только HTTPS)",
+    )
+
 
 # Создаем singleton
 settings = Settings()

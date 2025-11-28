@@ -59,7 +59,7 @@ async def register_submit(
             key="access_token",
             value=token,
             httponly=True,
-            secure=not settings.DEBUG,  # False для dev, True для prod
+            secure=settings.USE_SECURE_COOKIES,  # False для dev, True для prod
             samesite="strict",
             max_age=7 * 24 * 3600,
             path="/",
@@ -117,7 +117,7 @@ async def login_submit(
         key="access_token",
         value=token,
         httponly=True,
-        secure=not settings.DEBUG,  # ✅ True Только HTTPS (в production обязательно!), False для localhost
+        secure=settings.USE_SECURE_COOKIES,  # ✅ True Только HTTPS (в production обязательно!), False для localhost
         samesite="strict",  # ✅ Защита от CSRF
         max_age=7 * 24 * 3600,
         # domain=None,  # Текущий домен
