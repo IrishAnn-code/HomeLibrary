@@ -28,7 +28,8 @@
         <tr>
           <td>{{ loop.index }}</td>
           <td>{{ item.book.author }}</td>
-          <td><a href="/book/{{ item.book.id }}" class="text-decoration-none">{{ item.book.title }}</a></td>
+          <td><a href="/book/{{ item.book.id }}?back_url=/book/"
+                class="text-decoration-none">{{ item.book.title }}</a></td>
           <td>{{ item.book.genre }}</td>
           <td>{{ item.book.description }}</td>
           <td>

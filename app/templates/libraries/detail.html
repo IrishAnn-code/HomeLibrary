@@ -31,7 +31,8 @@
         <tr>
           <td>{{ loop.index }}</td>
           <td>{{ item.book.author }}</td>
-          <td><a href="/book/{{ item.book.id }}" class="text-decoration-none">{{ item.book.title }}</a></td>
+          <td><a href="/book/{{ item.book.id }}?back_url=/library/{{ library.id }}"
+                class="text-decoration-none">{{ item.book.title }}</a></td>
           <td>{{ item.book.genre }}</td>
           <td>{{ item.book.description }}</td>
           <td>
@@ -60,7 +61,7 @@
 <!-- Карточки для мобильных -->
 <div class="d-block d-lg-none">  <!-- ✅ Только на мобильных -->
   {% for item in books_with_status %}
-  <a href="/book/{{ item.book.id }}" class="text-decoration-none">
+  <a href="/book/{{ item.book.id }}?back_url=/library/{{ library.id }}" class="text-decoration-none">
   <div class="card mb-3">
     <div class="card-body text-dark">
       <h5 class="card-title">{{ item.book.title }}</h5>

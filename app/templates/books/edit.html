@@ -18,6 +18,7 @@
         {% endif %}
 
         <form action="/book/{{ book.id }}/edit" method="post">
+          <input type="hidden" name="back_url" value="{{ back_url }}">
           <div class="row">
             <!-- Автор -->
             <div class="col-md-6 mb-3">
@@ -180,7 +181,8 @@
             <button type="submit" class="btn btn-success">
               💾 Сохранить изменения
             </button>
-            <a href="/book/{{ book.id }}" class="btn btn-secondary">Отмена</a>
+            <a href="/book/{{ book.id }}{% if back_url %}?back_url={{ back_url }}{% endif %}"
+              class="btn btn-secondary">Отмена</a>
           </div>
         </form>
       </div>

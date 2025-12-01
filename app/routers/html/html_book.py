@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, Query
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 import logging
-from typing import Annotated
+from typing import Annotated, Optional
 
 from app.database.auth import get_current_user
 from app.database.db_depends import get_db
@@ -36,6 +38,7 @@ from app.utils.flash import get_flashed_messages, flash
 
 router = APIRouter(prefix="/book", tags=["Books (HTML)"])
 templates = Jinja2Templates(directory="app/templates")
+limiter = Limiter(key_func=get_remote_address)
 
 from datetime import timezone, timedelta
 
@@ -98,10 +101,12 @@ async def get_my_books(
     books_with_status = await get_user_books_with_status(
         db, current_user.id, skip, limit
     )
+    back_url = request.query_params.get("back_url", "/book/")
     return templates.TemplateResponse(
         "books/user_books.html",
         {
             "request": request,
+            "back_url": back_url,
             "messages": get_flashed_messages(request),
             "books_with_status": books_with_status,
             "user": current_user,
@@ -130,6 +135,7 @@ async def create_book_page(request: Request, db: DBType, current_user: CurrentUs
 
 
 @router.post("/create")
+@limiter.limit("30/hour")
 async def create_book_submit(
     request: Request,
     db: DBType,
@@ -156,7 +162,7 @@ async def create_book_submit(
             author=author.title(),
             title=title.capitalize(),
             description=description,
-            genre=genre.strip(),
+            genre=genre,
             color=color,
             read_status=read_status,
             lib_address=library.name,
@@ -237,6 +243,7 @@ async def delete_page(
     return RedirectResponse(url="/book", status_code=303)
 
 
+
 @router.get("/{book_id}/edit", response_class=HTMLResponse)
 async def edit_book_page(
     request: Request, db: DBType, book_id: int, current_user: CurrentUser
@@ -259,11 +266,13 @@ async def edit_book_page(
     popular_genres = await get_popular_genres(db)
     popular_authors = await get_popular_authors(db)
     read_status_value = await get_user_book_status(db, current_user.id, book_id)
+    back_url = request.query_params.get("back_url", "/book/")
 
     return templates.TemplateResponse(
         "books/edit.html",
         {
             "request": request,
+            "back_url": back_url,
             "messages": get_flashed_messages(request),
             "book": book,
             "libraries": libraries,
@@ -282,6 +291,7 @@ async def edit_book_submit(
     db: DBType,
     book_id: int,
     current_user: CurrentUser,
+    back_url: Optional[str] = Form(None),
     author: str = Form(...),
     title: str = Form(...),
     description: str = Form(None),
@@ -334,7 +344,11 @@ async def edit_book_submit(
             db, current_user.id, book_id, update_data, permissions
         )
         flash(request, "Книга обновлена!", "success")
-        return RedirectResponse(url=f"/book/{book_id}", status_code=303)
+        redirect_url = f"/book/{book_id}"
+        if back_url:
+            redirect_url = f"{redirect_url}?back_url={back_url}"
+
+        return RedirectResponse(url=redirect_url, status_code=303)
 
     except Exception as e:
         flash(request, f"Ошибка: {str(e)}", "error")
@@ -407,6 +421,8 @@ async def book_detail(
     request: Request, db: DBType, book_id: int, current_user: CurrentUser
 ):
     """Страница книги"""
+    back_url = request.query_params.get("back_url", "/book/")
+
     book = await get_book_by_id(db, book_id)
     if not book:
         flash(request, f"Книга не найдена", "error")
@@ -422,6 +438,7 @@ async def book_detail(
         "books/info.html",
         {
             "request": request,
+            "back_url": back_url,
             "messages": get_flashed_messages(request),
             "book": book,
             "user": user,

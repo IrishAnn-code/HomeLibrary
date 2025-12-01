@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Request, Depends, Form, HTTPException
+from fastapi import APIRouter, Request, Depends, Form, HTTPException, Query
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 import logging
-from typing import Annotated
+from typing import Annotated, Optional
 
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.auth import get_current_user
@@ -14,6 +16,7 @@ from app.utils.flash import get_flashed_messages, flash
 
 router = APIRouter(prefix="/library", tags=["Libraries (HTML)"])
 templates = Jinja2Templates(directory="app/templates")
+limiter = Limiter(key_func=get_remote_address)
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +55,7 @@ async def create_library_page(request: Request, current_user: CurrentUser):
 
 
 @router.post("/create")
+@limiter.limit("5/hour")
 async def create_library_submit(
     request: Request,
     db: DBType,
@@ -131,6 +135,7 @@ async def join_library_page(
 
 
 @router.post("/{library_id}/join")
+@limiter.limit("10/hour")
 async def join_library_submit(
     request: Request,
     db: DBType,

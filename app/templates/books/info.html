@@ -2,12 +2,18 @@
 
 {% block crud_container %}
 <article class="card container fluid">
-    <div class="d-flex bd-highlight mb-0">
-        <div class="me-auto p-3 bd-highlight fs-4">{{ book.author }}: {{ book.title }}</div>
+    <div class="mt-4 mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start">
+        <div class="mb-3 mb-md-0">
+            <h3 class="mb-0 fs-3 fs-md-2">{{ book.author }}: {{ book.title }}</h3>
+            <small class="text-muted">Добавлено: {{ user.username }}</small>
+        </div>
 
-            <div class="d-flex gap-2 align-items-center">
+            <div class="d-flex flex-wrap gap-2 align-items-center ">
+                <a href="{{ back_url }}" class="btn btn-secondary">Назад</a>
+
                {% if permissions.can_edit_status %}
-                <a href="/book/{{ book.id }}/edit" class="btn btn-outline-secondary d-flex align-items-center" >✏️</a>
+                <a href="/book/{{ book.id }}/edit?back_url={{ back_url }}" class="btn btn-outline-secondary d-flex align-items-center" >✏️</a>
                {% endif %}
 
                {% if permissions.can_delete %}
@@ -15,6 +21,7 @@
                     onclick="confirmDelete({{ book.id }}, '{{ book.title }}', '{{ book.author }}')">🗑</button>
                {% endif %}
             </div>
+        </div>
     </div>
 
     <div class="row">
@@ -69,17 +76,13 @@
                             <td class="fw-bold">Полка:</td>
                             <td>{{ book.shelf or "Нет описания" }}</td>
                         </tr>
-                        <tr>
-                            <td class="fw-bold">Добавлена:</td>
-                            <td>{{ user.username }}</td>
-                        </tr>
                     </table>
                 </div>
             </div>
         </div>
     </div>
-    <!-- Блок комментариев -->
 
+<!-- Блок комментариев -->
 <div class="mt-4">
     <div class="card-body">
         <h5 class="card-title">💬 Отзывы о книге ({{ comments|length }})</h5>
