@@ -1,9 +1,10 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 from app.models.enum import ReadStatus, GenreStatus
+from app.schemas.base import BaseSchema
 
 
-class BookCreate(BaseModel):
+class BookBase(BaseSchema):
     author: str = Field(..., min_length=1, max_length=200)
     title: str = Field(..., min_length=1, max_length=300)
     description: str | None = Field(None, max_length=2000)
@@ -11,12 +12,17 @@ class BookCreate(BaseModel):
     color: str | None = Field(None, pattern="^#[0-9A-Fa-f]{6}$")  # HEX цвет
     read_status: ReadStatus = Field(default=ReadStatus.NOT_READ)
     lib_address: str = Field(..., max_length=100)
-    room: str = Field(..., max_length=100)
-    shelf: str = Field(..., max_length=100)
+    room: str | None = Field(None, max_length=100)
+    shelf: str | None = Field(None, max_length=100)
     location: str = Field(..., max_length=100)
 
 
-class BookUpdate(BookCreate):
+class BookCreate(BookBase):
+    author: str
+    title: str
+
+
+class BookUpdate(BookBase):
     pass
 
 
