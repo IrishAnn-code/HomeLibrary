@@ -1,8 +1,10 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import EmailStr, Field
 from datetime import datetime
 
+from app.schemas.base import BaseSchema
 
-class UserBase(BaseModel):
+
+class UserBase(BaseSchema):
     """Базовая схема пользователя"""
 
     username: str = Field(
@@ -32,7 +34,7 @@ class UserCreate(UserBase):
         }
 
 
-class UserUpdate(BaseModel):
+class UserUpdate(BaseSchema):
     """Схема для обновления пользователя"""
 
     firstname: str | None = Field(None, max_length=50)
@@ -50,7 +52,7 @@ class UserUpdate(BaseModel):
         }
 
 
-class UserLogin(BaseModel):
+class UserLogin(BaseSchema):
     """Схема для входа в систему"""
 
     username: str = Field(..., description="Имя пользователя")

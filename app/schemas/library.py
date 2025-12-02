@@ -1,10 +1,11 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
 from datetime import datetime
 
+from app.schemas.base import BaseSchema
 from app.schemas.book import BookOut
 
 
-class LibraryBase(BaseModel):
+class LibraryBase(BaseSchema):
     """Базовая схема библиотеки"""
 
     name: str = Field(
@@ -33,7 +34,7 @@ class LibraryCreate(LibraryBase):
         }
 
 
-class LibraryJoin(BaseModel):
+class LibraryJoin(BaseSchema):
     """Схема для присоединения к библиотеке"""
 
     library_id_or_name: str = Field(
@@ -76,7 +77,7 @@ class LibraryWithBooks(LibraryOut):
         from_attributes = True
 
 
-class LibraryUpdate(BaseModel):
+class LibraryUpdate(BaseSchema):
     """Схема для обновления библиотеки"""
 
     name: str | None = Field(None, min_length=3, max_length=100)

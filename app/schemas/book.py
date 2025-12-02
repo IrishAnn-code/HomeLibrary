@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
 from datetime import datetime
 from app.models.enum import ReadStatus, GenreStatus
 from app.schemas.base import BaseSchema
@@ -26,7 +26,7 @@ class BookUpdate(BookBase):
     pass
 
 
-class BookOut(BaseModel):
+class BookOut(BaseSchema):
     """Схема для возврата книги"""
 
     id: int
